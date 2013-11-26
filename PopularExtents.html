@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=8,IE=9,IE=10,IE=11">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <script type="text/javascript" src="http://js.arcgis.com/3.7"></script>
+    <script type="text/javascript" src="config/config.js"></script>
+
+    <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/esri/css/esri.css">
+
+    <script>
+        // When dojo has loaded go to the first init function
+        require([
+            // Esri modules
+            "esri/map",
+            "esri/graphic",
+            "esri/layers/agstiled",
+            "esri/layers/agsdynamic",
+
+            // Dojo modules
+            "dojo/domReady!"
+        ], init);
+
+      var map;
+      var _intervalFunction;
+      var _currentlyAddedGraphics = [];
+       
+      // First initialisation
+      function init() {
+          // Load the configuration file
+          initVariables();
+
+          // Set the web title
+          document.title = configOptions.webTitle;
+
+          // Setup proxy
+          esri.config.defaults.io.proxyUrl = configOptions.proxyUrl;
+
+          // Get the initial extent
+          var initialExtent = new esri.geometry.Extent({
+              "xmin": configOptions.initialExtent.xmin,
+              "ymin": configOptions.initialExtent.ymin,
+              "xmax": configOptions.initialExtent.xmax,
+              "ymax": configOptions.initialExtent.ymax,
+              "spatialReference": {
+                  "wkid": parseInt(configOptions.spatialReference.WKID)
+              }
+          });
+
+          // Create map control
+          map = new esri.Map("map", {
+              wrapAround180: configOptions.wraparound180,
+              extent: initialExtent,
+              navigationMode: "css-transforms",
+              fadeOnZoom: true,
+              logo: false,
+              showAttribution: false
+          });
+
+          // Add the basemap
+          var basemap = new esri.layers.ArcGISTiledMapServiceLayer(configOptions.basemap.url);
+          map.addLayer(basemap);
+      }
+      
+      // When the play button is clicked
+      function play() {
+          //plot the extent every some secs
+          processLogs();					
+          _intervalFunction = setInterval(processLogs, 3000);
+      }
+      
+      // Plots extents from a log request
+      function plotExtents(response) {
+          // If no response returned
+          if (response == null || response == undefined) {
+              return;
+          }
+
+          // Get the logs
+          var logs = response["logMessages"];
+
+          // Get the records that have extent in them
+          for (var i = 0; i < logs.length; i++) {
+              var record = logs[i];
+              var message = record["message"];
+
+              // Get the date and time - convert from unix time
+              var unixTime = record["time"];
+              var unixDate = new Date(unixTime);
+              var year = unixDate.getFullYear();
+              var month = unixDate.getMonth();
+              var date = unixDate.getDate();
+              var hours = unixDate.getHours();
+              var minutes = unixDate.getMinutes();
+              var seconds = unixDate.getSeconds();
+              var formattedTime = hours + ':' + minutes + ':' + seconds;
+
+              console.log("Time - " + date + "/" + month + "/" + year + " at " + formattedTime);
+              console.log("Request - " + message);
+
+              // This extent has not been added before
+              if (message.search("Extent:") >= 0) {
+                  if (_currentlyAddedGraphics.indexOf(unixTime) >= 0) {
+                      continue;
+                  }
+                  var extent = message.replace("Extent:", "");
+                  var coords = extent.split(",");
+                  var polygonSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_NULL, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_DASH, new dojo.Color([111, 0, 255]), 2), new dojo.Color([111, 0, 255, 0.15]));
+                  var sr = new esri.SpatialReference({
+                      wkid: configOptions.spatialReference.WKID
+                  })
+                  var extent = new esri.geometry.Extent(parseFloat(coords[0]), parseFloat(coords[1]), parseFloat(coords[2]), parseFloat(coords[3]), sr);
+                  map.graphics.add(new esri.Graphic(extent, polygonSymbol));
+                  _currentlyAddedGraphics.push(unixTime);
+				  break;
+              }
+          }
+      }
+      
+      // Stops the plotting of extents
+      function stop(){
+          if (_intervalFunction != undefined) {
+              clearInterval(_intervalFunction);
+          }
+      }
+      
+      // Clears all the graphics from the map
+      function clearGraphics(){
+          stop();
+          if (map.graphics != undefined) {
+              map.graphics.clear();
+          }
+          _currentlyAddedGraphics = [];
+      }
+      
+      // Fetches log information from server	
+      function processLogs(){
+          var serverLogsRequest = esri.request({
+              url: configOptions.agsSite + "/admin/logs/query",
+              handleAs: "json",
+              content: {
+                  "level": "FINE",
+                  "filter": configOptions.agsQueryFilter,
+                  "f": "json",                 
+                  "token": configOptions.agsToken
+              },
+          });
+          serverLogsRequest.then(plotExtents, requestFailed);
+      }
+      
+      // Error handler
+      function requestFailed(error){
+          console.log("Error: ", error.message);
+      }      
+    </script>
+    <style>
+      html, body, #mapDiv {
+          padding: 0;
+          margin: 0;
+          height: 95%;
+      }
+    </style>
+  </head>
+  <body class="claro">    
+	<div id="infoBar">
+		<p><b>Popular Extents</b></p>
+		<p>
+		This demo application harvests logs from an ArcGIS Server over HTTP and plots the extents
+		requested by users. This is useful in determining the extents that need to be cached to speed up performance. Click
+		the play button to start the application. Every 3 seconds, it will plot one extent. Click the stop button to
+		stop plotting extents. The delete button will remove all the graphics from the map. 
+		</p>
+ </div>
+    <div align="center" id="toolBar" style="background-color: grey; ">
+      <input type="image" id="playButton" onclick="play();" src="images/play_round.png" alt="Play"/>
+			<input type="image" id="stopButton" onclick="stop();" src="images/stop_round.png" alt="Stop"/>
+			<input type="image" id="clearButton" onclick="clearGraphics();" src="images/clear_round.png" alt="Clear"/>
+    </div>
+		<div id="map"></div>
+  </body>
+</html>

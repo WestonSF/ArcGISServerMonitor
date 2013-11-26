@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=8,IE=9,IE=10">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/dojo/dijit/themes/claro/claro.css" />
+    <title>Services Dashboard</title>
+    
+    <script>
+      var dojoConfig = {
+       packages: [{
+          name: "scripts",
+          location: location.pathname.replace(/\/[^/]*$/, '') + "/scripts"
+        }],
+        debugAtAllCosts: false,
+        async: true,
+        isDebug: false
+      }
+
+      var protoConfig = {
+        defaultURL: "http://gis.mstn.govt.nz/arcgis/admin",
+        proxyURL: "http://gis.mstn.govt.nz/proxy/proxy.ashx"
+      }
+    </script>
+
+    <script src="http://js.arcgis.com/3.7"></script>
+    <style type="text/css">
+      html{
+        background: #7db9e8
+      }
+
+      body{
+        margin:0;
+        padding:0;
+        background: #589fd8;
+        background: -moz-linear-gradient(top,  #589fd8 0%, #6fa7d6 30%, #7db9e8 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#589fd8), color-stop(30%,#6fa7d6), color-stop(100%,#7db9e8));
+        background: -webkit-linear-gradient(top,  #589fd8 0%,#6fa7d6 30%,#7db9e8 100%);
+        background: -o-linear-gradient(top,  #589fd8 0%,#6fa7d6 30%,#7db9e8 100%);
+        background: -ms-linear-gradient(top,  #589fd8 0%,#6fa7d6 30%,#7db9e8 100%);
+        background: linear-gradient(to bottom,  #589fd8 0%,#6fa7d6 30%,#7db9e8 100%);
+        font-family:Arial, Helvetica;
+        width:100%;
+      }
+
+      h1{
+        font-size:12px;
+      }
+      h2{
+        font-family:Arial, Helvetica;
+        font-size: 14px;
+      }
+
+      .chartHolder{
+        width: 300px;
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+        background: #1e5799;
+        background: -moz-linear-gradient(top,  #1e5799 0%, #2989d8 30%, #0082e5 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1e5799), color-stop(30%,#2989d8), color-stop(100%,#0082e5)); 
+        background: -webkit-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+        background: -o-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+        background: -ms-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+        background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+        border: 2px solid #006699;
+      }
+
+      .chart{
+        width: 500px;
+        height: 300px;
+        position: absolute;
+        margin-top: -34px;
+        margin-left: -50px;
+      }
+
+      #serviceView{
+        width:800px;
+        margin:0 auto;
+      }
+    </style>
+    <script>
+      require([
+        "dojo/parser",
+        "scripts/serviceView",
+        "esri/IdentityManagerDialog",
+        "esri/request",
+        "dojo/domReady!"
+      ], function(parser, serviceView, IdentityManager, request){
+          esriConfig.defaults.io.timeout = 300000;
+          esriConfig.defaults.io.proxyUrl = protoConfig.proxyURL;
+          esri.config = esriConfig.defaults;
+          parser.parse();
+      });
+    </script>
+
+
+
+  </head>
+  <body class="claro">
+  <div id="infoBar">
+		<p><b>Services Dashboard</b></p>
+		<p>
+		This demo application harvests logs from an ArcGIS Server over HTTP along with the statistics from Admin API to plot the usage for a service. 
+		This is useful in determining if the servers are meeting request capacity or more computing is required.
+		</p>
+		<p>
+			For the purposes of this demo, provide your administrative credentials to the server and change the URL to point
+            to the administrator URL of your server.		
+		</p>
+ </div>
+        <div id="serviceView" data-dojo-type="scripts/serviceView"></div>
+  </body>
+</html>
