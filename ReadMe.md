@@ -1,6 +1,8 @@
-# ArcGIS Admin Toolkit
+# ArcGIS Server for Administrators
 
+Based of an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/23/demo-applications-arcgis-server-for-administrators-sessions-at-the-2013-user-conference)
 
+[Demo](http://gis.mstn.govt.nz/AGSAdmin)
 
 ![Screenshot](/Screenshot.jpg)
 

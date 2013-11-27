@@ -1,5 +1,4 @@
-// Very basic and roughly coded demo of using dojox graphs 
-// to display current server status through log scraping.
+// Define the modules
 define([
   "dojo/_base/declare",
   "dojo/_base/lang",
@@ -34,28 +33,20 @@ define([
   "dojox/charting/plot2d/Markers",
   "dojox/charting/axis2d/Default",
   "esri/utils"
-
 ],
+// When modules have loaded, execute this function
 function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr, domStyle, domConst ,_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Select, TextBox, Button, template, IdentityManager, request, AnalogGauge, AnalogArrowIndicator, Chart, PiePlot, Legend, theme, Highlight, Tooltip) {
-
+  // Return the following
   return declare([ _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
+    // Setup the variables
     widgetsInTemplate: true,
     templateString: template,
-
-
-    //-- Config --
 	_serverURL: protoConfig.defaultURL,
-    //------------
-
-
     _serviceChoice: null,
-
     _instanceData: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     _maxInstanceData: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     _slideInstanceGraph: true,
-
     _gaugeResponseHolder: null,
-
     _logPieChart: null,
     _logData: [
       {text : "Warning", y:1},
@@ -66,36 +57,32 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
     _lastSuccesses: null,
     _lastErrors: null,
     _lastWarnings: null,
-
     _constructed: false,
-
-    //-- Template attach points --
-    _txtServer: null,
+    // AGS services selection
     _selectHolder: null,
+    // Connection information
     _connectionHolder: null,
     _nodeInstancesValue: null,
     _nodeLogValue: null,
     _nodeResponseTime: null,
-    //-----------
+    // List of services
+    serviceList: [],
 
-
+    // On creation of widget
     postCreate: function (){
       var _self = this;
       theme.chart.fill= "transparent";
       theme.plotarea.fill = "transparent";
-      domAttr.set(this._txtServer, "value", this._serverURL);
-      var myButton = new Button({
-        label: "Connect To Server",
-        onClick: function(){
-          _self._serverURL = domAttr.get(_self._txtServer, "value");
-          when(_self._getAuth(), function() {
-            _self._connectToServer();
-          });
-        }
-      }, "connectButton");
+     
+      // Get authentication
+      when(_self._getAuth(), function () {
+          _self._connectToServer();
+      });
     },
 
-    _getAuth: function(folder) {
+    // Get authentication for the connection
+    _getAuth: function (folder) {
+      // Request authentication
       var dfd = request({
         url: this._serverURL,
         content: { f: "json"},
@@ -108,23 +95,29 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return dfd.promise;
     },
 
-
-    _getServices: function(folder) {
+    // Get a list of services for each of the folders
+    _getServices: function (folder) {
       var dfd = new Deferred();
+      // Request the services
       request({
         url: this._serverURL + (folder ? "/services/" + folder : "/services"),
         preventCache: true,
         content: { f: "json"},
         handleAs: "json",
         useProxy:false
-      }).then(function(response) {
+      }).
+      // On response
+      then(function (response) {
         dfd.resolve(response);
-      }, function(err) {
+      },
+      // On error
+      function (err) {
         dfd.resolve();
       });
       return dfd.promise;
     },
 
+    // Get the logs
     _getLogs: function(level) {
       var dfd = new Deferred();
       request({
@@ -149,110 +142,151 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return dfd.promise;
     },
 
+    // Connection to the server
     _connectToServer: function() {
       var _self = this;
-      var serviceList = [];
-      when(this._getServices(), lang.hitch(this, function(response){
+      // When services have been received
+      when(this._getServices(), lang.hitch(this, function (response) {
+        // If there is a reponse
         if(response !== undefined) {
-          domAttr.set(this._connectionHolder, "innerHTML", "Conencted To:" + this._serverURL);
-          if(this._constructed === false) {
-            this._constructed = true;
+          // Update connection information to show server connected to
+          domAttr.set(this._connectionHolder, "innerHTML", "Connected To:" + this._serverURL);        
+
+            // For each of the services that are in the root in the response
             array.forEach(response.services, function(service){
-              serviceList.push({label: service.serviceName + "." + service.type, value:service.serviceName + "." + service.type});
+               _self.serviceList.push({ label: service.serviceName + "." + service.type, value: service.serviceName + "." + service.type });
             });
-            array.forEach(response.foldersDetail, function(folder){
-              when(_self._getServices(folder.folderName), lang.hitch(this, function(folderServices){
-                array.forEach(folderServices.services, function(service){
-                  serviceList.push({label: service.folderName + "/" + service.serviceName + "." + service.type, value: service.folderName + "/" + service.serviceName + "." + service.type});
+
+            // If the services are all in the root
+            if (response.foldersDetail.length == 0) {
+                // Update the stats
+                updateStats();
+            }
+            else {
+                // For each of the folders in the response
+                var folderCount = 0;
+                array.forEach(response.foldersDetail, function (folder) {
+                    // When services have been received for folder
+                    when(_self._getServices(folder.folderName), lang.hitch(this, function (folderServices) {
+                        folderCount++;
+                        var servicesCount = 0;
+                        // For each of the services in the folder
+                        array.forEach(folderServices.services, function (service) {
+                            _self.serviceList.push({ label: service.folderName + "/" + service.serviceName + "." + service.type, value: service.folderName + "/" + service.serviceName + "." + service.type });
+                            servicesCount++;
+
+                            // If finished looping through all folders and services
+                            if ((folderCount >= response.foldersDetail.length) & (servicesCount >= folderServices.services.length)) {
+                                // Update the stats
+                                updateStats();
+                            }
+                        });
+                    }));
                 });
-              }));
-            });
-            this._serviceChoice = serviceList[0].value;
-
-            new Select({
-              name: "serviceSelect",
-              options: serviceList,
-              style: {
-                width: "200px"
-              }
-            }).placeAt(this._selectHolder).on("change", function(){
-              _self._serviceChoice = this.get("value");
-              _self._scanLogs();
-              _self._slideInstanceGraph = true;
-            });
-
-            this._logPieChart = new Chart("pieChart");
-            this._logPieChart.setTheme(theme);
-            this._logPieChart.addPlot("default", {
-              type: PiePlot,
-              font: "bold bold 11pt Tahoma",
-              stroke: {color: "blue", width: 1},
-              radius: 200,
-              fontColor: "black",
-              labelOffset: 10,
-              labels: false
-            });
-            new Tooltip(this._logPieChart, "default");
-
-
-            this._gaugeResponseHolder = this._createGauge("chartResponseTime");
-
-            var currentInstance = {
-              values: this._instanceData,
-              color: "blue",
-              series: "Current Instances"
-            };
-
-            var maxIstance = {
-              values: this._maxInstanceData,
-              color: "red",
-              series: "Maximum Instances"
-            };
-
-            var instanceChart = this._createChart("chartInstances", [currentInstance, maxIstance], 0, 10);
-            this._runChart(instanceChart, "chartInstances", [currentInstance, maxIstance]);
-
-            this._logPieChart.addSeries("report",this._logData);
-            this._logPieChart.render();
-            domStyle.set("pieChart", "opacity", "0");
-
-
-            new Legend({chart: this._logPieChart}, "pieLegend");
-            setInterval(function(){_self._scanLogs();}, 3000);
-
-          }
-          else {
-            domConst.empty(this._selectHolder);
-            array.forEach(response.services, function(service){
-              serviceList.push({label: service.serviceName + "." + service.type, value:service.serviceName + "." + service.type});
-            });
-            array.forEach(response.foldersDetail, function(folder){
-              when(_self._getServices(folder.folderName), lang.hitch(this, function(folderServices){
-                array.forEach(folderServices.services, function(service){
-                  serviceList.push({label: service.folderName + "/" + service.serviceName + "." + service.type, value: service.folderName + "/" + service.serviceName + "." + service.type});
-                });
-              }));
-            });
-            this._serviceChoice = serviceList[0].value;
-            new Select({
-              name: "serviceSelect",
-              options: serviceList,
-              style: {
-                width: "200px"
-              }
-            }).placeAt(this._selectHolder).on("change", function(){
-              _self._slideInstanceGraph = true;
-              _self._serviceChoice = this.get("value");
-              _self._scanLogs();
-            });
-          }
+            }
         }
+        // If there is no response
         else {
+          // Update connection information to show connection error
           domAttr.set(this._connectionHolder, "innerHTML", "Connected To: Connection Error");
         }
       }));
+
+      // After the services have been received, update the stats
+      function updateStats() {
+              // If graphs/stats haven't been contructed yet
+              if (_self._constructed === false) {
+                  // Set variable to constructed
+                  _self._constructed = true;
+                  // Default selection to be the first service
+                  _self._serviceChoice = _self.serviceList[0].value;
+
+                  // Setup selection dropdown for services
+                  new Select({
+                      name: "serviceSelect",
+                      options: _self.serviceList,
+                      style: {
+                          width: "300px"
+                      }
+                  })
+                  // Setup the selection holder
+                  .placeAt(_self._selectHolder)
+                  // On change of selection
+                  .on("change", function () {
+                      _self._serviceChoice = this.get("value");
+                      // Scan the logs for the service
+                      _self._scanLogs();
+                      _self._slideInstanceGraph = true;
+                  });
+
+                  // Setup pie chart
+                  _self._logPieChart = new Chart("pieChart");
+                  _self._logPieChart.setTheme(theme);
+                  _self._logPieChart.addPlot("default", {
+                      type: PiePlot,
+                      font: "bold bold 11pt Tahoma",
+                      stroke: { color: "blue", width: 1 },
+                      radius: 200,
+                      fontColor: "black",
+                      labelOffset: 10,
+                      labels: false
+                  });
+                  new Tooltip(_self._logPieChart, "default");
+
+                  // Setup the gauge
+                  _self._gaugeResponseHolder = _self._createGauge("chartResponseTime");
+
+                  var currentInstance = {
+                      values: _self._instanceData,
+                      color: "blue",
+                      series: "Current Instances"
+                  };
+
+                  var maxInstance = {
+                      values: _self._maxInstanceData,
+                      color: "red",
+                      series: "Maximum Instances"
+                  };
+
+                  var instanceChart = _self._createChart("chartInstances", [currentInstance, maxInstance], 0, 10);
+                  _self._runChart(instanceChart, "chartInstances", [currentInstance, maxInstance]);
+
+                  _self._logPieChart.addSeries("report", _self._logData);
+                  _self._logPieChart.render();
+                  domStyle.set("pieChart", "opacity", "0");
+
+
+                  new Legend({ chart: _self._logPieChart }, "pieLegend");
+                  setInterval(function () { _self._scanLogs(); }, 3000);
+
+              }
+              // If graphs/stats have already been constructed
+              else {
+                  domConst.empty(_self._selectHolder);
+
+                  // Default selection to be the first service
+                  _self._serviceChoice = _self.serviceList[0].value;
+
+                  // Setup selection dropdown for services
+                  new Select({
+                      name: "serviceSelect",
+                  options: _self.serviceList,
+                  style: {
+                      width: "300px"
+                  }
+                  // Setup the selection holder
+                  }).placeAt(_self._selectHolder)
+                  // On change of selection
+                  .on("change", function () {
+                      _self._slideInstanceGraph = true;
+                      _self._serviceChoice = this.get("value");
+                      _self._scanLogs();
+                  });
+              }
+      };
     },
 
+    // Updating instances in use
     _updateInstancesInUse: function() {
       var busy = 0;
       var total = 0;
@@ -284,6 +318,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       }));
     },
 
+    // Updating access times
     _updateAccessTimes: function(records) {
       var averageTime = 0, i = 0;
       array.forEach(records.logMessages, lang.hitch(this, function(record){
@@ -296,6 +331,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return (isNaN(averageTime) ? 0 : averageTime);
     },
 
+    // Get service statistics
     _getServiceStatistics: function() {
       var dfd = new Deferred();
       request({
@@ -311,7 +347,8 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return dfd.promise;
     },
 
-    _scanLogs: function() {
+    // Scan the logs
+    _scanLogs: function () {
       var accessTime = 0;
       var warnTotal =0, errTotal = 0, sucTotal = 0;
       when(this._getLogs("FINE"), lang.hitch(this, function(logResult){
@@ -357,6 +394,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       }));
     },
 
+    // Create the gauge
     _createGauge: function(node) {
       var gaugeHolder;
       var _self = this;
@@ -474,6 +512,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return gaugeHolder;
     },
 
+    // Create the chart
     _createChart: function(node, chartData, min, max){
       var chart = new Chart(node);
       chart.setTheme(theme);
@@ -486,6 +525,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       return chart;
     },
 
+    // Process the chart
     _runChart: function(chart, node, chartData){
       var _self = this;
       this._updateInstancesInUse();
@@ -511,6 +551,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       }
     },
 
+    // Build the properties
     _buildFromProps: function(props) {
       var create = domConst.create, f, key;
       f = create("form", {
