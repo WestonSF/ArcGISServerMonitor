@@ -1,30 +1,30 @@
 <div data-dojo-attach-point="main">
-<p style="font-size:11px" data-dojo-attach-point="_connectionHolder">Connection Info: No Connection</p>
-<p style="font-size:11px">Services Dashboard - <span data-dojo-attach-point="_selectHolder"></span></p>
+<p style="font-size:16px" data-dojo-attach-point="_connectionHolder">Connection Info: No Connection</p>
+<p style="font-size:16px">Service - <span data-dojo-attach-point="_selectHolder"></span></p>
 <table>
   	<tr>
-  		<td width="330">
-			<h2>Number Of Instances In Use Stream</h2>
+  		<td width="100%">
+			<B style="font-size:14px">Number Of Instances In Use Stream</B>
 			<div class="chartHolder">
 				<div id="chartInstances" class="chart"></div>
 			</div>
-			<div><span style="font-size:10px;" data-dojo-attach-point="_nodeInstancesValue">Number of Instances: 0 | Maximum Instances: 0</span></div>
+			<div><span style="font-size:12px;" data-dojo-attach-point="_nodeInstancesValue">Number of Instances: 0 | Maximum Instances: 0</span></div>
 		</td>
 		<td rowspan="2">
-			<h2>Errors, Warnings &amp; Successes</h2>
+			<B style="font-size:14px">Errors, Warnings &amp; Successes</B>
 			<div id="peiChartHodler" class="chartHolder" style="width:450px; height:488px">
 				<div id="pieChart" class="chart" style="height:510px; width: 455px; margin: -1px 0 0 -1px;"></div>
 			</div>
-			<div><div id="pieLegend"></div><span style="font-size:10px;" data-dojo-attach-point="_nodeLogValue">Warnings: 0  | Successes: 0 | Errors: 0<span></div>
+			<div><div id="pieLegend"></div><span style="font-size:12px;" data-dojo-attach-point="_nodeLogValue">Warnings: 0  | Successes: 0 | Errors: 0<span></div>
 		</td>
 	</tr>
 	<tr>
 		<td>
-			<h2>Average Response Time</h2>
+			<B style="font-size:14px">Average Response Time</B>
 			<div class="chartHolder">
 				<div id="chartResponseTime" class="chart" style="margin:0;"></div>
 			</div>
-			<span style="font-size:10px;" data-dojo-attach-point="_nodeResponseTime">Response time in Seconds: 0</span>
+			<span style="font-size:12px;" data-dojo-attach-point="_nodeResponseTime">Response time in Seconds: 0</span>
 		</td>
 	</tr>
 </table>

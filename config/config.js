@@ -2,8 +2,8 @@
 
 function initVariables() {
     configOptions = {
-        // Title in the web window
-        webTitle: "Wairarapa ArcGIS Server Administration",
+        // Title for the application
+        Title: "Wairarapa ArcGIS Server Administration",
 
         // Image for bottom right
         logo: "<img src=\"images/logo/NRC_logo.JPG\" height=\"45\" width=\"125\">", 
