@@ -1,6 +1,22 @@
-<div data-dojo-attach-point="main">
-<p style="font-size:16px" data-dojo-attach-point="_connectionHolder">Connection Info: No Connection</p>
-<p style="font-size:16px">Service - <span data-dojo-attach-point="_selectHolder"></span></p>
+<div id="services" data-dojo-attach-point="main">
+  <p data-dojo-attach-point="_connectionHolder"><B>Connection Info - No Connection</B></p>
+
+  <b>Service - </b><div class="btn-group">
+  <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+  <button class="btn btn-primary servicesSelection">Select Service</button>
+  <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+  <ul id="servicesDropdown" class="dropdown-menu servicesDropdown" role="menu"></ul>
+
+</div>
+
+<div id="filter">
+  <b>Filter - </b><div class="btn-group">
+  <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+  <button class="btn btn-primary filterSelection">Select Filter</button>
+  <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+  <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
+</div>
+
 <table>
   	<tr>
   		<td width="100%">

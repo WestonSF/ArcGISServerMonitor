@@ -56,14 +56,359 @@ margin:0 auto;
     z-index:1000;
 }
 
-/* Layers loading bar  */
-#layerLoadBar { 
-    position: fixed; 
-    bottom: 10px; 
-    left: 50%; 
-    margin-left:-75px;
-    margin-top:-10px;
-    width: 150px; 
-    height: 20px; 
-    z-index:1000;
+/* Secure services login popup */
+.esriSignInDialog {
+  background:#FFFFFF;
+  color: #000000; 
+  border:1px solid #bfbfbf;
+  font-family: arial, verdana, tahoma;
+  font-size: 1.0em;
+  padding: 3px 3px;
+}
+
+.dijitReset {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    line-height: normal;
+    color: inherit;
+}
+
+.dj_a11y .dijitReset {
+    -moz-appearance: none;
+}
+
+.dijitInline {
+    display: inline-block;
+    #zoom: 1;
+    #display:inline;
+    border: 0;
+    padding: 0;
+    vertical-align: middle;
+    #vertical-align: auto;
+}
+
+table.dijitInline {
+    display: inline-table;
+    box-sizing: content-box;
+    -moz-box-sizing: content-box;
+}
+
+.dijitSelect .dijitButtonText {
+    float: left;
+    vertical-align: top;
+}
+
+.dijitSelect input.dijitInputField, .dijitTextBox input.dijitInputField {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.dijitValidationTextBox .dijitValidationContainer {
+    display: none;
+}
+
+.dijitTeeny {
+    font-size: 1px;
+    line-height: 1px;
+}
+
+.dijitOffScreen {
+    position: absolute !important;
+    left: 50% !important;
+    top: -10000px !important;
+}
+
+.dijitPopup {
+    position: absolute;
+    background-color: transparent;
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+.dijitDisplayNone {
+    display: none !important;
+}
+
+.dijitContainer {
+    overflow: hidden;
+}
+
+.dj_a11y .dijitButtonNode {
+    border: black outset medium !important;
+    padding: 0 !important;
+}
+
+.dj_a11y .dijitArrowButton {
+    padding: 0 !important;
+}
+
+.dj_a11y .dijitButtonContents {
+    margin: 0.15em;
+}
+
+.dj_a11y .dijitTextBoxReadOnly .dijitInputField, .dj_a11y .dijitTextBoxReadOnly .dijitButtonNode {
+    border-style: outset!important;
+    border-width: medium!important;
+    border-color: #999 !important;
+    color: #999 !important;
+}
+
+.dijitButtonNode * {
+    vertical-align: middle;
+}
+
+.dijitSelect .dijitArrowButtonInner, .dijitButtonNode .dijitArrowButtonInner {
+    background: no-repeat center;
+    width: 12px;
+    height: 12px;
+    direction: ltr;
+}
+
+.dijitLeft {
+    background-position: left top;
+    background-repeat: no-repeat;
+}
+
+.dijitStretch {
+    white-space: nowrap;
+    background-repeat: repeat-x;
+}
+
+.dijitRight {
+    #display:inline;
+    background-position: right top;
+    background-repeat: no-repeat;
+}
+
+.dijitToggleButton, .dijitButton, .dijitDropDownButton, .dijitComboButton {
+    margin: 0.2em;
+    vertical-align: middle;
+}
+
+.dijitButtonContents {
+    display: block;
+}
+
+td.dijitButtonContents {
+    display: table-cell;
+}
+
+.dijitToolbar .dijitButtonContents {
+    padding: 1px 2px;
+}
+
+.dijitSelect {
+    border: 1px solid gray;
+}
+
+.dijitButtonNode {
+    border: 1px solid gray;
+    margin: 0;
+    line-height: normal;
+    vertical-align: middle;
+    #vertical-align: auto;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.dijitTextBox .dijitButtonNode {
+    border-width: 0;
+}
+
+.dijitSelect, .dijitSelect *, .dijitButtonNode, .dijitButtonNode * {
+    cursor: pointer;
+}
+
+.dijitTextBox {
+    border: solid black 1px;
+    #overflow: hidden;
+    width: 15em;
+    vertical-align: middle;
+}
+
+.dijitTextBox input:focus {
+    outline: none;
+}
+
+.dijitTextBoxFocused {
+    outline: 5px -webkit-focus-ring-color;
+}
+
+.dijitSelect input, .dijitTextBox input {
+    float: left;
+}
+
+.dijitInputInner {
+    border: 0 !important;
+    background-color: transparent !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.dj_a11y .dijitTextBox input {
+    margin: 0 !important;
+}
+
+.dijitValidationTextBoxError input.dijitValidationInner, .dijitSelect input, .dijitTextBox input.dijitArrowButtonInner {
+    text-indent: -2em !important;
+    direction: ltr !important;
+    text-align: left !important;
+    height: auto !important;
+    #text-indent: 0 !important;
+    #letter-spacing: -5em !important;
+    #text-align: right !important;
+}
+
+.dijitSelect .dijitSelectLabel span {
+    line-height: 100%;
+}
+
+.dj_a11y input.dijitValidationInner, .dj_a11y input.dijitArrowButtonInner {
+    text-indent: 0 !important;
+    width: 1em !important;
+    #text-align: left !important;
+    color: black !important;
+}
+
+.dijitValidationTextBoxError .dijitValidationContainer {
+    display: inline;
+    cursor: default;
+}
+
+.dj_a11y .dijitFocusedLabel {
+    border: 1px dotted;
+    outline: 0px !important;
+}
+
+.dijitTooltip {
+    position: absolute;
+    z-index: 2000;
+    display: block;
+    left: 0;
+    top: -10000px;
+    overflow: visible;
+}
+
+.dijitTooltipContainer {
+    border: solid black 2px;
+    background: #b8b5b5;
+    color: black;
+    font-size: small;
+}
+
+.dijitTooltipFocusNode {
+    padding: 2px 2px 2px 2px;
+}
+
+.dijitTooltipConnector {
+    position: absolute;
+}
+
+.dijitLayoutContainer {
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+
+.dijitAlignTop, .dijitAlignBottom, .dijitAlignLeft, .dijitAlignRight {
+    position: absolute;
+    overflow: hidden;
+}
+
+.dijitBorderContainer, .dijitBorderContainerNoGutter {
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.dijitBorderContainerPane, .dijitBorderContainerNoGutterPane {
+    position: absolute !important;
+    z-index: 2;
+}
+
+.dijitContentPane {
+    display: block;
+    overflow: auto;
+}
+
+.dijitContentPaneSingleChild {
+    overflow: hidden;
+}
+
+.dijitTitlePane {
+    display: block;
+    overflow: hidden;
+}
+
+.dijitTitlePaneTitle {
+    cursor: pointer;
+}
+
+.dijitDialog {
+    position: absolute;
+    z-index: 999;
+    overflow: hidden;
+}
+
+.dijitDialogTitleBar {
+    cursor: move;
+}
+
+.dijitDialogFixed .dijitDialogTitleBar {
+    cursor: default;
+}
+
+.dijitDialogCloseIcon {
+    cursor: pointer;
+}
+
+.dijitDialogUnderlayWrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 998;
+    display: none;
+    background: transparent !important;
+}
+
+.dijitDialogUnderlay {
+    background: #eee;
+    opacity: 0.5;
+}
+
+.dijitDialog .closeText {
+    display: none;
+    position: absolute;
+}
+
+.dj_a11y .dijitDialog .closeText {
+    display: inline;
+}
+
+.dijitTextArea {
+    width: 100%;
+    overflow-y: auto;
+}
+
+.dijitSelect .dijitButtonContents {
+    padding: 0;
+    white-space: nowrap;
+    text-align: left;
+    border-style: none solid none none;
+    border-width: 1px;
+}
+
+.dijitToggleButtonIconChar {
+    display: none !important;
+}
+
+.dj_a11y .dijitToggleButton .dijitToggleButtonIconChar {
+    display: inline !important;
+    visibility: hidden;
 }

@@ -150,11 +150,14 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
         // If there is a reponse
         if(response !== undefined) {
           // Update connection information to show server connected to
-          domAttr.set(this._connectionHolder, "innerHTML", "Connected To:" + this._serverURL);        
+          domAttr.set(this._connectionHolder, "innerHTML", "<B>Connected To - " + this._serverURL + "</B");        
 
             // For each of the services that are in the root in the response
             array.forEach(response.services, function(service){
                _self.serviceList.push({ label: service.serviceName + "." + service.type, value: service.serviceName + "." + service.type });
+
+                // Append to dropdown
+               $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service.folderName + "/" + service.serviceName + "." + service.type + '</a></li>');
             });
 
             // If the services are all in the root
@@ -173,6 +176,8 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                         // For each of the services in the folder
                         array.forEach(folderServices.services, function (service) {
                             _self.serviceList.push({ label: service.folderName + "/" + service.serviceName + "." + service.type, value: service.folderName + "/" + service.serviceName + "." + service.type });
+                            // Append to dropdown
+                            $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service.folderName + "/" + service.serviceName + "." + service.type + '</a></li>');
                             servicesCount++;
 
                             // If finished looping through all folders and services
@@ -184,11 +189,17 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                     }));
                 });
             }
+
+            // Append to dropdown for filter
+            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Hour" + '</a></li>');
+            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last 24 Hours" + '</a></li>');
+            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Week" + '</a></li>');
+            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Month" + '</a></li>');
         }
         // If there is no response
         else {
           // Update connection information to show connection error
-          domAttr.set(this._connectionHolder, "innerHTML", "Connected To: Connection Error");
+          domAttr.set(this._connectionHolder, "innerHTML", "<B>Connected To - Connection Error" + "</B");
         }
       }));
 
@@ -200,23 +211,29 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                   _self._constructed = true;
                   // Default selection to be the first service
                   _self._serviceChoice = _self.serviceList[0].value;
+                  $('.servicesSelection').text(_self.serviceList[0].value);
+                  // Show the progress bar
+                  $("#appLoadBar").show();
+                  // Scan the logs for the service
+                  _self._scanLogs();
+                  _self._slideInstanceGraph = true;
 
-                  // Setup selection dropdown for services
-                  new Select({
-                      name: "serviceSelect",
-                      options: _self.serviceList,
-                      style: {
-                          width: "300px"
-                      }
-                  })
-                  // Setup the selection holder
-                  .placeAt(_self._selectHolder)
-                  // On change of selection
-                  .on("change", function () {
-                      _self._serviceChoice = this.get("value");
+                  // On change handler for dropdowns
+                  $('.servicesDropdown li > a').click(function (e) {
+                      // Show the progress bar
+                      $("#appLoadBar").show();
+
+                      $('.servicesSelection').text(this.innerHTML);
+                      _self._serviceChoice = this.innerHTML;
                       // Scan the logs for the service
                       _self._scanLogs();
                       _self._slideInstanceGraph = true;
+                  });
+                  $('.filterDropdown li > a').click(function (e) {
+                      // Show the progress bar
+                      $("#appLoadBar").show();
+
+                      $('.filterSelection').text(this.innerHTML);
                   });
 
                   // Setup pie chart
@@ -267,20 +284,16 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                   // Default selection to be the first service
                   _self._serviceChoice = _self.serviceList[0].value;
 
-                  // Setup selection dropdown for services
-                  new Select({
-                      name: "serviceSelect",
-                  options: _self.serviceList,
-                  style: {
-                      width: "300px"
-                  }
-                  // Setup the selection holder
-                  }).placeAt(_self._selectHolder)
-                  // On change of selection
-                  .on("change", function () {
-                      _self._slideInstanceGraph = true;
-                      _self._serviceChoice = this.get("value");
+                  // On change handler for dropdown
+                  $('.dropdown-inverse li > a').click(function (e) {
+                      // Show the progress bar
+                      $("#appLoadBar").show();
+
+                      $('.servicesSelection').text(this.innerHTML);
+                      _self._serviceChoice = this.innerHTML;
+                      // Scan the logs for the service
                       _self._scanLogs();
+                      _self._slideInstanceGraph = true;
                   });
               }
       };
@@ -391,6 +404,9 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
           domAttr.set(this._nodeLogValue, "innerHTML", "Warnings: 0  | Successes: 0 | Errors: 0");
           domStyle.set("pieChart", "opacity", "0");
         }
+
+        // Hide the progress bar
+        $("#appLoadBar").hide();
       }));
     },
 

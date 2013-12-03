@@ -15,7 +15,7 @@ function initVariables() {
         agsToken: "nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw..",
 
         // Filter for selecting services to show
-        agsQueryFilter: "{ \"services\": [\"PropertyAndBoundaries/PropertyInternal.MapServer\",\"PropertyAndBoundaries/PropertyPublic.MapServer\"], \"server\": [\"Rest\"] }",
+        agsQueryFilter: "{ \"services\": [\"PropertyAndBoundaries/PropertyInternal.MapServer\"], \"server\": [\"Rest\"] }",
 
         // Proxy to use
         proxyUrl: "http://gis.mstn.govt.nz/proxy/proxy.ashx",

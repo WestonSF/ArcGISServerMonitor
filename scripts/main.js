@@ -1,4 +1,8 @@
-﻿require([
+﻿var map;
+var intervalFunction;
+var currentlyAddedGraphics = [];
+
+require([
     // Esri modules
     "esri/map",
     "esri/graphic",
@@ -11,12 +15,11 @@
     "scripts/serviceView",
 
     // Dojo modules
-    "dojo/parser",
     "dojo/domReady!"
-],
+], init);
 
 // Main function executed when DOM ready
-function (map, graphic, agstiled, agsdynamic, IdentityManager, request, serviceView, parser) {
+function init() {
     // Set the title
     document.title = configOptions.Title;
     $("#title").text(configOptions.Title);
@@ -24,14 +27,6 @@ function (map, graphic, agstiled, agsdynamic, IdentityManager, request, serviceV
     // Get the current page
     var pagePath = window.location.pathname;
     var currentPage = pagePath.substring(pagePath.lastIndexOf('/') + 1);
-
-    // Services dashboard
-    if (currentPage.indexOf("ServicesDashboard") != -1) {
-        esriConfig.defaults.io.timeout = 300000;
-        esriConfig.defaults.io.proxyUrl = protoConfig.proxyURL;
-        esri.config = esriConfig.defaults;
-        parser.parse();
-    }
 
     // Popular extents
     if (currentPage.indexOf("PopularExtents") != -1) {
@@ -65,12 +60,22 @@ function (map, graphic, agstiled, agsdynamic, IdentityManager, request, serviceV
 
         // Plot the extent every some secs
         processLogs();
-        _intervalFunction = setInterval(processLogs, 3000);
+        intervalFunction = setInterval(processLogs, 2000);
+    }
+    // Services dashboard
+    else {
+        // Parser module load
+        require(["dojo/parser"], function (parser) {
+            esriConfig.defaults.io.timeout = 300000;
+            esriConfig.defaults.io.proxyUrl = protoConfig.proxyURL;
+            esri.config = esriConfig.defaults;
+            parser.parse();
+        });
     }
 
     // Hide the progress bar for loading the app
     $("#appLoadBar").hide();
-});
+}
 
 // Plots extents from a log request
 function plotExtents(response) {
@@ -87,25 +92,26 @@ function plotExtents(response) {
         var record = logs[i];
         var message = record["message"];
 
-        // Get the date and time - convert from unix time
-        var unixTime = record["time"];
-        var unixDate = new Date(unixTime);
-        var year = unixDate.getFullYear();
-        var month = unixDate.getMonth();
-        var date = unixDate.getDate();
-        var hours = unixDate.getHours();
-        var minutes = unixDate.getMinutes();
-        var seconds = unixDate.getSeconds();
-        var formattedTime = hours + ':' + minutes + ':' + seconds;
-
-        console.log("Time - " + date + "/" + month + "/" + year + " at " + formattedTime);
-        console.log("Request - " + message);
-
         // This extent has not been added before
         if (message.search("Extent:") >= 0) {
-            if (_currentlyAddedGraphics.indexOf(unixTime) >= 0) {
+            // Get the date and time - convert from unix time
+            var unixTime = record["time"];
+            var unixDate = new Date(unixTime);
+            var year = unixDate.getFullYear();
+            var month = unixDate.getMonth();
+            var date = unixDate.getDate();
+            var hours = unixDate.getHours();
+            var minutes = unixDate.getMinutes();
+            var seconds = unixDate.getSeconds();
+            var formattedTime = hours + ':' + minutes + ':' + seconds;
+
+            console.log("Time - " + date + "/" + month + "/" + year + " at " + formattedTime);
+            console.log("Request - " + message);
+
+            if (currentlyAddedGraphics.indexOf(unixTime) >= 0) {
                 continue;
             }
+
             var extent = message.replace("Extent:", "");
             var coords = extent.split(",");
             var polygonSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_NULL, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_DASH, new dojo.Color([111, 0, 255]), 2), new dojo.Color([111, 0, 255, 0.15]));
@@ -114,7 +120,7 @@ function plotExtents(response) {
             })
             var extent = new esri.geometry.Extent(parseFloat(coords[0]), parseFloat(coords[1]), parseFloat(coords[2]), parseFloat(coords[3]), sr);
             map.graphics.add(new esri.Graphic(extent, polygonSymbol));
-            _currentlyAddedGraphics.push(unixTime);
+            currentlyAddedGraphics.push(unixTime);
             break;
         }
     }
@@ -122,8 +128,8 @@ function plotExtents(response) {
 
 // Stops the plotting of extents
 function stop() {
-    if (_intervalFunction != undefined) {
-        clearInterval(_intervalFunction);
+    if (intervalFunction != undefined) {
+        clearInterval(intervalFunction);
     }
 }
 
@@ -133,7 +139,7 @@ function clearGraphics() {
     if (map.graphics != undefined) {
         map.graphics.clear();
     }
-    _currentlyAddedGraphics = [];
+    currentlyAddedGraphics = [];
 }
 
 // Fetches log information from server	
