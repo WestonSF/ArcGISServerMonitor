@@ -19,7 +19,6 @@ define([
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dojo/text!./serviceView.html",
-  "esri/IdentityManager",
   "esri/request",
   "dojox/gauges/AnalogGauge",
   "dojox/gauges/AnalogArrowIndicator",
@@ -35,14 +34,13 @@ define([
   "esri/utils"
 ],
 // When modules have loaded, execute this function
-function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr, domStyle, domConst ,_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Select, TextBox, Button, template, IdentityManager, request, AnalogGauge, AnalogArrowIndicator, Chart, PiePlot, Legend, theme, Highlight, Tooltip) {
+function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr, domStyle, domConst ,_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Select, TextBox, Button, template, request, AnalogGauge, AnalogArrowIndicator, Chart, PiePlot, Legend, theme, Highlight, Tooltip) {
   // Return the following
   return declare([ _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
     // Setup the variables
     widgetsInTemplate: true,
     templateString: template,
 	_serverURL: protoConfig.defaultURL,
-    _serviceChoice: null,
     _instanceData: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     _maxInstanceData: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     _slideInstanceGraph: true,
@@ -67,6 +65,12 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
     _nodeResponseTime: null,
     // List of services
     serviceList: [],
+    // Current service selected
+    _serviceChoice: null,
+    // List of filters
+    filterList: [],
+    // Current filter selected
+    _filterChoice: null,
 
     // On creation of widget
     postCreate: function (){
@@ -76,18 +80,19 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
      
       // Get authentication
       when(_self._getAuth(), function () {
+          // Connect to server
           _self._connectToServer();
       });
     },
 
-    // Get authentication for the connection
+    // Get the connection
     _getAuth: function (folder) {
-      // Request authentication
+      // Connection request
       var dfd = request({
-        url: this._serverURL,
+        url: this._serverURL + "?token=" + configOptions.agsToken,
         content: { f: "json"},
         handleAs: "json"
-      }).then(function(response) {
+      }).then(function (response) {
         dfd.resolve(response);
       }, function(err) {
         dfd.resolve(err);
@@ -97,10 +102,10 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
 
     // Get a list of services for each of the folders
     _getServices: function (folder) {
-      var dfd = new Deferred();
+        var dfd = new Deferred();
       // Request the services
       request({
-        url: this._serverURL + (folder ? "/services/" + folder : "/services"),
+        url: this._serverURL + (folder ? "/services/" + folder : "/services") + "?token=" + configOptions.agsToken,
         preventCache: true,
         content: { f: "json"},
         handleAs: "json",
@@ -118,21 +123,62 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
     },
 
     // Get the logs
-    _getLogs: function(level) {
+    _getLogs: function (level) {
+      var filterEndTime;
+      var _self = this;
       var dfd = new Deferred();
+
+      // Get current unix time
+      var unixTime = (new Date).getTime();
+      if (_self._filterChoice == "Last Hour") {
+          filterEndTime = unixTime - (3600*1000);
+      }
+      if (_self._filterChoice == "Last 24 Hours") {
+          filterEndTime = unixTime - (86400*1000);
+      }
+      if (_self._filterChoice == "Last Week") {
+          filterEndTime = unixTime - (604800*1000);
+      }
+      if (_self._filterChoice == "Last 30 Days") {
+          filterEndTime = unixTime - (2592000*1000);
+      }
+
+      // Get the date and time - convert from unix time
+      var unixDate = new Date(unixTime);
+      var year = unixDate.getFullYear();
+      var month = unixDate.getMonth();
+      var date = unixDate.getDate();
+      var hours = unixDate.getHours();
+      var minutes = unixDate.getMinutes();
+      var seconds = unixDate.getSeconds();
+      var formattedTime = hours + ':' + minutes + ':' + seconds;
+      console.log("Stats showing from " + date + "/" + month + "/" + year + " at " + formattedTime);
+
+      var unixTimeEnd = filterEndTime;
+      var unixDate = new Date(unixTimeEnd);
+      var year = unixDate.getFullYear();
+      var month = unixDate.getMonth();
+      var date = unixDate.getDate();
+      var hours = unixDate.getHours();
+      var minutes = unixDate.getMinutes();
+      var seconds = unixDate.getSeconds();
+      var formattedTime = hours + ':' + minutes + ':' + seconds;
+      console.log("Stats showing to " + date + "/" + month + "/" + year + " at " + formattedTime);
+
       request({
-        url: this._serverURL + "/logs/query",
+        url: this._serverURL + "/logs/query" + "?token=" + configOptions.agsToken,
         preventCache: true,
         content: { f: "json"},
         handleAs: "json",
         useProxy:false,
         form: this._buildFromProps({
           startTime: "",
-          endTime: "",
+          // Set end date from the filter selection
+          endTime: filterEndTime,
           level: level,
           filterType: "json",
           filter: '{"services":["' + this._serviceChoice + '"],"machines": "*"}',
-          pageSize: 10000
+          pageSize: 1000
         })
       }).then(function(response) {
         dfd.resolve(response);
@@ -143,7 +189,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
     },
 
     // Connection to the server
-    _connectToServer: function() {
+    _connectToServer: function () {
       var _self = this;
       // When services have been received
       when(this._getServices(), lang.hitch(this, function (response) {
@@ -151,7 +197,6 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
         if(response !== undefined) {
           // Update connection information to show server connected to
           domAttr.set(this._connectionHolder, "innerHTML", "<B>Connected To - " + this._serverURL + "</B");        
-
             // For each of the services that are in the root in the response
             array.forEach(response.services, function(service){
                _self.serviceList.push({ label: service.serviceName + "." + service.type, value: service.serviceName + "." + service.type });
@@ -194,7 +239,10 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Hour" + '</a></li>');
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last 24 Hours" + '</a></li>');
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Week" + '</a></li>');
-            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Month" + '</a></li>');
+            $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last 30 Days" + '</a></li>');
+            // Set default selection
+            $('.filterSelection').text("Last 24 Hours");
+            _self._filterChoice = "Last 24 Hours";
         }
         // If there is no response
         else {
@@ -234,6 +282,10 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                       $("#appLoadBar").show();
 
                       $('.filterSelection').text(this.innerHTML);
+                      _self._filterChoice = this.innerHTML;
+                      // Scan the logs for the service
+                      _self._scanLogs();
+                      _self._slideInstanceGraph = true;
                   });
 
                   // Setup pie chart
@@ -285,12 +337,22 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
                   _self._serviceChoice = _self.serviceList[0].value;
 
                   // On change handler for dropdown
-                  $('.dropdown-inverse li > a').click(function (e) {
+                  $('.servicesDropdown li > a').click(function (e) {
                       // Show the progress bar
                       $("#appLoadBar").show();
 
                       $('.servicesSelection').text(this.innerHTML);
                       _self._serviceChoice = this.innerHTML;
+                      // Scan the logs for the service
+                      _self._scanLogs();
+                      _self._slideInstanceGraph = true;
+                  });
+                  $('.filterDropdown li > a').click(function (e) {
+                      // Show the progress bar
+                      $("#appLoadBar").show();
+
+                      $('.filterSelection').text(this.innerHTML);
+                      _self._filterChoice = this.innerHTML;
                       // Scan the logs for the service
                       _self._scanLogs();
                       _self._slideInstanceGraph = true;
@@ -348,7 +410,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
     _getServiceStatistics: function() {
       var dfd = new Deferred();
       request({
-        url: this._serverURL + "/services/" + this._serviceChoice + "/statistics",
+          url: this._serverURL + "/services/" + this._serviceChoice + "/statistics" + "?token=" + configOptions.agsToken,
         preventCache: true,
         content: { f: "json"},
         handleAs: "json"
@@ -567,7 +629,7 @@ function(declare, lang, win, array, fx, Deferred, when, coreFx, Memory, domAttr,
       }
     },
 
-    // Build the properties
+    // Build the properties for the query
     _buildFromProps: function(props) {
       var create = domConst.create, f, key;
       f = create("form", {

@@ -55,7 +55,20 @@
 		requested by users. This is useful in determining the extents that need to be cached to speed up performance. Click
 		the play button to start the application. Every 3 seconds, it will plot one extent. Click the stop button to
 		stop plotting extents. The delete button will remove all the graphics from the map.</p>
-        <br/>
+        <div id="services">
+          <b>Map Service - </b><div class="btn-group">
+          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+          <button class="btn btn-primary servicesSelection">Select Service</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+          <ul id="servicesDropdown" class="dropdown-menu servicesDropdown" role="menu"></ul>
+        </div>
+        <div id="filter">
+          <b>Filter - </b><div class="btn-group">
+          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+          <button class="btn btn-primary filterSelection">Select Filter</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+          <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
+        </div>
         <div id="map"></div>
       </div>
     </div>
