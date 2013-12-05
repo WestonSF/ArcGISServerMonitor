@@ -1,10 +1,9 @@
-﻿var map;
-var intervalFunction;
-var currentlyAddedGraphics = [];
-// Current service selected
+﻿// Current service selected
 var serviceChoice = null;
 // Current filter selected
 var filterChoice = null;
+// Current graphic selected
+var graphicChoice = null;
 
 require([
     // Esri modules
@@ -73,19 +72,52 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Week" + '</a></li>');
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last 30 Days" + '</a></li>');
             // Set default selection
-            $('.filterSelection').text("Last 24 Hours");
-            filterChoice = "Last 24 Hours";
+            if (configOptions.defaultFilter) {
+                $('.filterSelection').text(configOptions.defaultFilter);
+                filterChoice = configOptions.defaultFilter;
+            }
+            else {
+                $('.filterSelection').text("Last 24 Hours");
+                filterChoice = "Last 24 Hours";
+            }
+
+            // Add values into graphic dropdown
+            $("#graphicDropdown").append('<li><a href="#graphicDropdown">' + "Polygon" + '</a></li>');
+            $("#graphicDropdown").append('<li><a href="#graphicDropdown">' + "Point" + '</a></li>');
+            $("#graphicDropdown").append('<li><a href="#graphicDropdown">' + "Hot Spot" + '</a></li>');
+            // Set default selection
+            if (configOptions.defaultGraphic) {
+                $('.graphicSelection').text(configOptions.defaultGraphic);
+                graphicChoice = configOptions.defaultGraphic;
+            }
+            else {
+                $('.graphicSelection').text("Polygon");
+                graphicChoice = "Polygon";
+            }
 
             // Add values into services dropdown
             array.forEach(serviceList, function (service) {
                 $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
             });
             // Set default selection
-            $('.servicesSelection').text(serviceList[0]);
-            serviceChoice = serviceList[0];
+            if (configOptions.defaultService) {
+                $('.servicesSelection').text(configOptions.defaultService);
+                serviceChoice = configOptions.defaultService;
+            }
+            else {
+                // Set the first service in the list
+                $('.servicesSelection').text(serviceList[0]);
+                serviceChoice = serviceList[0];
+            }
+
+            // Scan the logs and plot the extents
+            scanLogs();
 
             // On change handler for services dropdown
             $('.servicesDropdown li > a').click(function (e) {
+                // Show the progress bar
+                $("#appLoadBar").show();
+
                 // Update dropdown and selection
                 $('.servicesSelection').text(this.innerHTML);
                 serviceChoice = this.innerHTML;
@@ -93,12 +125,14 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
                 // Clear previous graphics
                 clearGraphics();
 
-                // Plot the extents
-                processLogs();
-                intervalFunction = setInterval(processLogs, 2000);
+                // Scan the logs and plot the extents
+                scanLogs();
             });
             // On change handler for filter dropdown
             $('.filterDropdown li > a').click(function (e) {
+                // Show the progress bar
+                $("#appLoadBar").show();
+
                 // Update dropdown and selection
                 $('.filterSelection').text(this.innerHTML);
                 filterChoice = this.innerHTML;
@@ -106,14 +140,24 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
                 // Clear previous graphics
                 clearGraphics();
 
-                // Plot the extents
-                processLogs();
-                intervalFunction = setInterval(processLogs, 2000);
+                // Scan the logs and plot the extents
+                scanLogs();
             });
+            // On change handler for graphic dropdown
+            $('.graphicDropdown li > a').click(function (e) {
+                // Show the progress bar
+                $("#appLoadBar").show();
 
-            // Plot the extent every some secs
-            processLogs();
-            intervalFunction = setInterval(processLogs, 2000);
+                // Update dropdown and selection
+                $('.graphicSelection').text(this.innerHTML);
+                graphicChoice = this.innerHTML;
+
+                // Clear previous graphics
+                clearGraphics();
+
+                // Scan the logs and plot the extents
+                scanLogs();
+            });
         });
     }
 
@@ -127,104 +171,8 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
             parser.parse();
         });
     }
-
-    // Hide the progress bar for loading the app
-    $("#appLoadBar").hide();
     // ---------------------------------------------------------------------------------------
 
-
-    // ------------------------ Fetches log information from server	------------------------
-    function processLogs() {
-        var filterEndTime;
-
-        // Get current unix time
-        var unixTime = (new Date).getTime();
-
-        var unixTime = (new Date).getTime();
-        if (filterChoice == "Last Hour") {
-            filterEndTime = unixTime - (3600 * 1000);
-        }
-        if (filterChoice == "Last 24 Hours") {
-            filterEndTime = unixTime - (86400 * 1000);
-        }
-        if (filterChoice == "Last Week") {
-            filterEndTime = unixTime - (604800 * 1000);
-        }
-        if (filterChoice == "Last 30 Days") {
-            filterEndTime = unixTime - (2592000 * 1000);
-        }
-
-        var serverLogsRequest = esri.request({
-            url: configOptions.agsSite + "/admin/logs/query",
-            handleAs: "json",
-            content: {
-                "level": "FINE",
-                "filter": "{ \"services\": [\"" + serviceChoice + "\"], \"server\": [\"Rest\"] }",
-                "endTime": filterEndTime,
-                "f": "json",
-                "pageSize": "1000",
-                "token": configOptions.agsToken
-            },
-        });
-        serverLogsRequest.then(plotExtents, requestFailed);
-    }
-
-    // Plots extents from a log request
-    function plotExtents(response) {
-        // If no response returned
-        if (response == null || response == undefined) {
-            return;
-        }
-
-        // Get the logs
-        var logs = response["logMessages"];
-
-        // Get the records that have extent in them
-        for (var i = 0; i < logs.length; i++) {
-            var record = logs[i];
-            var message = record["message"];
-
-            // This extent has not been added before
-            if (message.search("Extent:") >= 0) {
-                // Get the date and time - convert from unix time
-                var unixTime = record["time"];
-                var unixDate = new Date(unixTime);
-                var year = unixDate.getFullYear();
-                var month = unixDate.getMonth();
-                var date = unixDate.getDate();
-                var hours = unixDate.getHours();
-                var minutes = unixDate.getMinutes();
-                var seconds = unixDate.getSeconds();
-                var formattedTime = hours + ':' + minutes + ':' + seconds;
-
-                console.log("Time - " + date + "/" + month + "/" + year + " at " + formattedTime);
-                console.log("Request - " + message);
-
-                if (currentlyAddedGraphics.indexOf(unixTime) >= 0) {
-                    continue;
-                }
-
-                var extent = message.replace("Extent:", "");
-                var coords = extent.split(",");
-                var polygonSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_NULL, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_DASH, new dojo.Color([111, 0, 255]), 2), new dojo.Color([111, 0, 255, 0.15]));
-                var sr = new esri.SpatialReference({
-                    wkid: configOptions.spatialReference.WKID
-                })
-                var extent = new esri.geometry.Extent(parseFloat(coords[0]), parseFloat(coords[1]), parseFloat(coords[2]), parseFloat(coords[3]), sr);
-                map.graphics.add(new esri.Graphic(extent, polygonSymbol));
-                currentlyAddedGraphics.push(unixTime);
-                break;
-            }
-        }
-    }
-
-    // Clears all the graphics from the map
-    function clearGraphics() {
-        if (map.graphics != undefined) {
-            map.graphics.clear();
-        }
-        currentlyAddedGraphics = [];
-    }
 
     // Get all services for an arcgis server site
     function getAllServices(services,callback) {
@@ -289,6 +237,7 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
         }));
     }
 
+
     // Gets the services for a folder on arcgis server
     function getServices(folder) {
         var dfd = new dojo.Deferred();
@@ -310,6 +259,188 @@ function (map, graphic, agstiled, agsdynamic, request, serviceView, lang, array,
         });
         return dfd.promise;
     }
+
+
+    // Scans the arcgis server logs
+    function scanLogs() {
+        var accessTime = 0;
+        var warnTotal = 0;
+        var errTotal = 0;
+        var sucTotal = 0;
+
+        // When logs have been returned
+        when(getLogs(), lang.hitch(this, function (logResult) {
+            // Get the logs
+            var logs = logResult["logMessages"];
+
+            // Popular extents
+            if (currentPage.indexOf("PopularExtents") != -1) {
+                // For each of the logs
+                for (var i = 0; i < logs.length; i++) {
+                    var record = logs[i];
+                    var message = record["message"];
+
+                    // Get the records that have extent in them
+                    if (message.search("Extent:") >= 0) {
+                        // Add graphic to map
+                        addGraphic(message);
+                    }
+                }
+            }
+            // Services dashboard
+            else {
+                // Get the access time
+                accessTime = getAcessTimes(logResult);
+
+                // For each of the logs
+                for (var i = 0; i < logs.length; i++) {
+                    var record = logs[i];
+                    var message = record["message"];
+
+                    // Get message type
+                    if (record.type === "WARNING") {
+                        warnTotal++;
+                    }
+                    if (record.type === "SEVERE") {
+                        errTotal++;
+                    }
+                    if (record.type === "INFO") {
+                        sucTotal++;
+                    }
+                    if (record.type === "FINE") {
+                        sucTotal++;
+                    }
+                }
+            }
+            // Hide the progress bar
+            $("#appLoadBar").hide();
+        }));
+    }
+
+
+    // Get the arcgis server logs
+    function getLogs() {
+        var filterEndTime;
+        var dfd = new deferred();
+
+        // Get current unix time
+        var unixTime = (new Date).getTime();
+        if (filterChoice == "Last Hour") {
+            filterEndTime = unixTime - (3600 * 1000);
+        }
+        if (filterChoice == "Last 24 Hours") {
+            filterEndTime = unixTime - (86400 * 1000);
+        }
+        if (filterChoice == "Last Week") {
+            filterEndTime = unixTime - (604800 * 1000);
+        }
+        if (filterChoice == "Last 30 Days") {
+            filterEndTime = unixTime - (2592000 * 1000);
+        }
+
+        // Get the date and time - convert from unix time
+        var unixDate = new Date(unixTime);
+        var year = unixDate.getFullYear();
+        var month = unixDate.getMonth();
+        var date = unixDate.getDate();
+        var hours = unixDate.getHours();
+        var minutes = unixDate.getMinutes();
+        var seconds = unixDate.getSeconds();
+        var formattedTime = hours + ':' + minutes + ':' + seconds;
+        console.log("Stats showing from " + date + "/" + month + "/" + year + " at " + formattedTime);
+
+        var unixTimeEnd = filterEndTime;
+        var unixDate = new Date(unixTimeEnd);
+        var year = unixDate.getFullYear();
+        var month = unixDate.getMonth();
+        var date = unixDate.getDate();
+        var hours = unixDate.getHours();
+        var minutes = unixDate.getMinutes();
+        var seconds = unixDate.getSeconds();
+        var formattedTime = hours + ':' + minutes + ':' + seconds;
+        console.log("Stats showing to " + date + "/" + month + "/" + year + " at " + formattedTime);
+
+        esri.request({
+            url: configOptions.agsSite + "/admin/logs/query" + "?token=" + configOptions.agsToken,
+            preventCache: true,
+            useProxy: false,
+            handleAs: "json",
+            content: {
+                "level": "FINE",
+                "filter": "{ \"services\": [\"" + serviceChoice + "\"], \"server\": [\"Rest\"] }",
+                "endTime": filterEndTime,
+                "f": "json",
+                "pageSize": "1000",
+                "token": configOptions.agsToken
+            }
+        }).then(function (response) {
+            dfd.resolve(response);
+        }, function (err) {
+            dfd.resolve();
+        });
+        return dfd.promise;
+    }
+
+
+    // Get access time for log
+    function getAcessTimes (records) {
+        var averageTime = 0, i = 0;
+        array.forEach(records.logMessages, lang.hitch(this, function(record){
+            if(record.elapsed !== ""){
+                averageTime += Number(record.elapsed);
+                i++;
+            }
+        }));
+        averageTime = averageTime / i;
+        return (isNaN(averageTime) ? 0 : averageTime);
+    }
+
+
+    // Add graphic to map
+    function addGraphic(logMessage) {
+        var extent = logMessage.replace("Extent:", "");
+        // Get the coordinates
+        var coords = extent.split(",");
+        // Get the symbology
+        var polygonSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 3, 0.7), new dojo.Color([255, 0, 0, 0.0]));
+        var sr = new esri.SpatialReference({
+            wkid: configOptions.spatialReference.WKID
+        })
+        var extent = new esri.geometry.Extent(parseFloat(coords[0]), parseFloat(coords[1]), parseFloat(coords[2]), parseFloat(coords[3]), sr);
+
+        // If graphic to be shown is polygon
+        if (graphicChoice == "Polygon") {
+            // Add polygon graphic to map
+            map.graphics.add(new esri.Graphic(extent, polygonSymbol));
+        }
+        // If graphic to be shown is point
+        if (graphicChoice == "Point") {
+            // Get center point of polygon
+            var centerPointCoords = extent.getCenter();
+            // Get the symbology
+            var pointSymbol = new esri.symbol.SimpleMarkerSymbol(esri.symbol.SimpleMarkerSymbol.STYLE_CIRCLE, 14, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 1), new dojo.Color([255, 0, 0, 0.25]));
+            // Add point graphic to map
+            map.graphics.add(new esri.Graphic(centerPointCoords, pointSymbol));
+        }
+        // If graphic to be shown is hot spot
+        if (graphicChoice == "Hot Spot") {
+            // Get center point of polygon
+            var centerPointCoords = extent.getCenter();
+            // Get the symbology
+            var pointSymbol = new esri.symbol.SimpleMarkerSymbol(esri.symbol.SimpleMarkerSymbol.STYLE_CIRCLE, 14, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 1), new dojo.Color([255, 0, 0, 0.25]));
+            // Add point graphic to map
+            map.graphics.add(new esri.Graphic(centerPointCoords, pointSymbol));
+        }
+    }
+
+
+    // Clears all the graphics from the map
+    function clearGraphics() {
+        if (map.graphics != undefined) {
+            map.graphics.clear();
+        }
+    }
+
 
     // Error handler
     function requestFailed(error) {

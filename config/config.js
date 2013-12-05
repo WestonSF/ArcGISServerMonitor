@@ -5,9 +5,6 @@ function initVariables() {
         // Title for the application
         Title: "Wairarapa ArcGIS Server Administration",
 
-        // Image for bottom right
-        logo: "<img src=\"images/logo/NRC_logo.JPG\" height=\"45\" width=\"125\">", 
-
         // ArcGIS server site
         agsSite: "http://gis.mstn.govt.nz/arcgis",
 
@@ -23,9 +20,18 @@ function initVariables() {
         // Spatial reference
         spatialReference: { WKID: 2193, name: "NZTM" },
 
+        // Basemap wrap around
         wraparound180: false, 
 
         // Basemap to be used
-        basemap: { id: "Streets", url: "http://services.arcgisonline.co.nz/arcgis/rest/services/Generic/newzealand/MapServer" }
+        basemap: { id: "Topographic", url: "http://gis.mstn.govt.nz/arcgis/rest/services/Basemaps/TopographicEsri/MapServer" },
+
+        // Default dropdown options
+        defaultService: "PropertyAndBoundaries/PropertyInternal.MapServer", // Full service name e.g. PropertyAndBoundaries/PropertyInternal.MapServer
+        defaultFilter: "Last 24 Hours", // Last Hour, Last 24 Hours, Last Week or Last 30 Days
+        defaultGraphic: "Polygon", // Polygon, Point or Hot Spot
+
+        // Popular extent graphics
+        //polygonSymbol: new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_NULL, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_DASH, new dojo.Color([111, 0, 255]), 2), new dojo.Color([111, 0, 255, 0.15]))
     };
 }
