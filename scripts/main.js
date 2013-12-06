@@ -188,9 +188,10 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
         $("#appLoadBar").show();
         $("#requestsPieChartContainer").css('display', 'none');
         $("#requestsTimeGaugeContainer").css('display', 'none');
+        $("#drawTimeGaugeContainer").css('display', 'none');
 
         // Get a list of services
-        getAllServices("mapServices", function (serviceList) {
+        getAllServices("all", function (serviceList) {
             // Add values into filter dropdown
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last Hour" + '</a></li>');
             $("#filterDropdown").append('<li><a href="#filterDropdown">' + "Last 24 Hours" + '</a></li>');
@@ -230,6 +231,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 $("#appLoadBar").show();
                 $("#requestsPieChartContainer").css('display', 'none');
                 $("#requestsTimeGaugeContainer").css('display', 'none');
+                $("#drawTimeGaugeContainer").css('display', 'none');
 
                 // Update dropdown and selection
                 $('.servicesSelection').text(this.innerHTML);
@@ -247,6 +249,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 $("#appLoadBar").show();
                 $("#requestsPieChartContainer").css('display', 'none');
                 $("#requestsTimeGaugeContainer").css('display', 'none');
+                $("#drawTimeGaugeContainer").css('display', 'none');
 
                 // Update dropdown and selection
                 $('.filterSelection').text(this.innerHTML);
@@ -332,8 +335,9 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
     // Scans the arcgis server logs
     function scanLogs() {
         var accessTime = 0;
-        var requestTotal = 0;
-        var accessTime = 0;
+        var totalDrawTime = 0;
+        var averageDrawTime = 0;
+        var drawRequestCount = 0;
         var warnTotal = 0;
         var errTotal = 0;
         var sucTotal = 0;
@@ -354,24 +358,30 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                         // Add graphic to map
                         addGraphic(message);
                         // Add to request counter
-                        requestTotal++;
+                        drawRequestCount++;
                     }
                 }
-                // Update request count
-                $("#totalRequests").text("Number of requests (max 10,000) - " + commaSeparateNumber(requestTotal));
+                // Update draw request count
+                $("#totalDraws").text("Number of draw requests (max 10,000) - " + commaSeparateNumber(drawRequestCount));
 
                 // Hide the progress bar
                 $("#appLoadBar").hide();
             }
             // Services dashboard
             else {
-                // Get the access time
-                accessTime = getAcessTimes(logResult);
-
                 // For each of the logs
                 for (var i = 0; i < logs.length; i++) {
                     var record = logs[i];
                     var message = record["message"];
+
+                    // Get the records that request a draw
+                    if (message.search("End ExportMapImage") >= 0) {
+                        // Add to total draw time
+                        totalDrawTime = totalDrawTime + parseFloat(record["elapsed"]);
+
+                        // Add to request counter
+                        drawRequestCount++;
+                    }
 
                     // Get message type
                     if (record.type === "WARNING") {
@@ -397,26 +407,11 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 logData[1] = ({ text: "Success - " + commaSeparateNumber(sucTotal), y: sucTotal, tooltip: "Number of Successes - " + sucTotal });
                 logData[2] = ({ text: "Errors - " + commaSeparateNumber(errTotal), y: errTotal, tooltip: "Number of Errors - " + errTotal });
 
-                // If charts haven't been created
-                if (!pieChart) {
-                    // create the pie chart for requests
-                    createPieChart("requestsPieChart", logData);
-                }
-                // Update chart
-                else {
-                    pieChart.updateSeries("report", logData);
-                    pieChart.render();
-                    pieLegend.refresh();
-                }
-                if (!gauge) {
-                    // Create the gauge for requests
-                    createGauge("requestsTimeGauge", accessTime);
-                }
-                // Update chart
-                else {
-                    gauge.indicators[0].value = accessTime;
-                    gauge.startup();
-                }
+                // Get the access time
+                accessTime = getAcessTimes(logResult);
+
+                // Get the average draw time
+                averageDrawTime = totalDrawTime / drawRequestCount
 
                 // Get the total requests
                 var totalRequests = commaSeparateNumber(parseInt(sucTotal) + parseInt(warnTotal) + parseInt(errTotal));
@@ -424,13 +419,43 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 // Update request count
                 $("#totalRequests").text("Number of requests (max 10,000) - " + totalRequests);
 
+                // Update draw request count
+                $("#totalDraws").text("Number of draw requests (max 10,000) - " + commaSeparateNumber(drawRequestCount));
+
                 // Update average response time
                 $("#averageResponseTime").text("Average Response Time (seconds) - " + accessTime.toFixed(2));
+
+                // Update average draw time
+                $("#averageDrawTime").text("Average Draw Time (seconds) - " + averageDrawTime.toFixed(2));
+
+                // If charts haven't been created
+                if (!pieChart) {
+                    // create the pie chart for requests
+                    createPieChart("requestsPieChart", logData);
+                }
+                    // Update chart
+                else {
+                    pieChart.updateSeries("report", logData);
+                    pieChart.render();
+                    pieLegend.refresh();
+                }
+                if (!gauge) {
+                    // Create the gauge for average requests
+                    createGauge("requestsTimeGauge", accessTime);
+                    // Create the gauge for average draw time
+                    createGauge("drawTimeGauge", averageDrawTime);
+                }
+                    // Update chart
+                else {
+                    gauge.indicators[0].value = accessTime;
+                    gauge.startup();
+                }
 
                 // Hide the progress bar and show the graphs
                 $("#appLoadBar").hide();
                 $("#requestsPieChartContainer").css('display', 'block');
                 $("#requestsTimeGaugeContainer").css('display', 'block');
+                $("#drawTimeGaugeContainer").css('display', 'block');
             }
         }));
     }

@@ -67,16 +67,29 @@
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
           <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
         </div>
+
         <div id="requestsPieChartContainer">
+            <h2>Success Rate</h2>
             <div id="requestsPieChart"></div>
             <div id="requestsPieLegend"></div>
             <p id="totalRequests">Number of requests (max 10,000) - 0</p>
         </div>
+        <br />
         <div id="requestsTimeGaugeContainer">
+            <h2>Response Time</h2>
             <div id="requestsTimeGauge"></div>
             <br />
             <p id="averageResponseTime">Average Response Time (seconds) - 0.0</p>
         </div>
+        <br />
+        <div id="drawTimeGaugeContainer">
+            <h2>Draw Time</h2>
+            <div id="drawTimeGauge"></div>
+            <br />
+            <p id="totalDraws">Number of draw requests (max 10,000) - 0</p>
+            <p id="averageDrawTime">Average Draw Time (seconds) - 0.0</p>
+        </div>
+
       </div>
     </div>
 
