@@ -5,10 +5,11 @@ margin:0;
 padding:0;
 }
 
-
-.chartHolder{
-width: 300px;
-height: 200px;
+/* Requests pie chart */
+#requestsPieChart{
+top: 10px;
+width: 380px;
+height: 280px;
 overflow: hidden;
 position: relative;
 background: #1e5799;
@@ -21,17 +22,21 @@ background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
 border: 2px solid #006699;
 }
 
-.chart{
-width: 500px;
-height: 300px;
-position: absolute;
-margin-top: -34px;
-margin-left: -50px;
-}
-
-#serviceView{
-width:800px;
-margin:0 auto;
+/* Requests time gauge */
+#requestsTimeGauge{
+top: 20px;
+width: 350px;
+height: 200px;
+overflow: hidden;
+position: relative;
+background: #1e5799;
+background: -moz-linear-gradient(top,  #1e5799 0%, #2989d8 30%, #0082e5 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1e5799), color-stop(30%,#2989d8), color-stop(100%,#0082e5)); 
+background: -webkit-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: -o-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: -ms-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+border: 2px solid #006699;
 }
 
 /* Application loading bar  */

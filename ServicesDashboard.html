@@ -53,39 +53,39 @@
         <h1>Services Dashboard</h1>
 	    <p>This application harvests logs from an ArcGIS Server over HTTP along with the statistics from Admin API to plot the usage for a service. 
 	    This is useful in determining if the servers are meeting request capacity or more computing is required.</p>
-        <br/>
-        <div id="serviceView" data-dojo-type="scripts/serviceView"></div>
+        <div id="services">
+          <b>Service - </b><div class="btn-group">
+          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+          <button class="btn btn-primary servicesSelection">Select Service</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+          <ul id="servicesDropdown" class="dropdown-menu servicesDropdown" role="menu"></ul>
+        </div>
+        <div id="filter">
+          <b>Filter - </b><div class="btn-group">
+          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+          <button class="btn btn-primary filterSelection">Select Filter</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+          <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
+        </div>
+        <div id="requestsPieChartContainer">
+            <div id="requestsPieChart"></div>
+            <div id="requestsPieLegend"></div>
+            <p id="totalRequests">Number of requests (max 10,000) - 0</p>
+        </div>
+        <div id="requestsTimeGaugeContainer">
+            <div id="requestsTimeGauge"></div>
+            <br />
+            <p id="averageResponseTime">Average Response Time (seconds) - 0.0</p>
+        </div>
       </div>
     </div>
-
-    <script type="text/javascript" src="config/config.js"></script>
 
     <!-- Bootstrap core JavaScript -->
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="libraries/bootstrap/3.0.2/js/bootstrap.min.js"></script>
-
-    <script>
-        // Setup widgets location
-        var dojoConfig = {
-            packages: [{
-                name: "scripts",
-                location: location.pathname.replace(/\/[^/]*$/, '') + "/scripts"
-            }],
-            debugAtAllCosts: true,
-            async: true,
-            isDebug: true
-        }
-
-        // Load the configuration file
-        initVariables();
-
-        var protoConfig = {
-            defaultURL: configOptions.agsSite + "/admin",
-            proxyURL: configOptions.proxyUrl
-        }
-    </script>
-
+    <!-- JavaScript files -->
     <script type="text/javascript" src="http://js.arcgis.com/3.7"></script>
+    <script type="text/javascript" src="config/config.js"></script>
     <script type="text/javascript" src="scripts/main.js"></script>
   </body>
 </html>

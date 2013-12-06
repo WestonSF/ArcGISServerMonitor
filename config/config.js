@@ -8,7 +8,7 @@ function initVariables() {
         // ArcGIS server site
         agsSite: "http://gis.mstn.govt.nz/arcgis",
 
-        // ArcGIS server token - HTTP referer - Token: nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw.. - Expires 23/08/2014
+        // ArcGIS server token - HTTP referer of where application is hosted - Token: nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw.. - Expires 23/08/2014
         agsToken: "nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw..",
 
         // Proxy to use
@@ -32,6 +32,7 @@ function initVariables() {
         defaultGraphic: "Polygon", // Polygon, Point or Hot Spot
 
         // Popular extent graphics
-        //polygonSymbol: new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_NULL, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_DASH, new dojo.Color([111, 0, 255]), 2), new dojo.Color([111, 0, 255, 0.15]))
+        polygonSymbol: new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 2), new dojo.Color([255, 0, 0, 0.0])),
+        pointSymbol: new esri.symbol.SimpleMarkerSymbol(esri.symbol.SimpleMarkerSymbol.STYLE_CIRCLE, 14, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 1), new dojo.Color([255, 0, 0, 0.25]))
     };
 }
