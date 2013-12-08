@@ -9,7 +9,7 @@ Based of an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/2
 
 [Demo](http://gis.mstn.govt.nz/AGSAdmin)
 
-![Screenshot](/Screenshot.jpg)
+![Screenshot](/images/Screenshot.jpg)
 
 
 ## Features
@@ -55,6 +55,19 @@ Based of an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/2
 
 ## Installation Instructions
 
+* Install proxy on web server
+	* Copy the proxy folder to C:\inetpub\wwwroot
+	* Convert directory to application in IIS
+	* Update the paremter in the configuration file ("proxyurl") to point to the proxy e.g. "'[PUBLICSERVERADDRESS]'/proxy/proxy.ashx"
+* Generate token for ArcGIS for Server at '[PUBLICSERVERADDRESS]'/arcgis/tokens
+	* HTTP referer - [PUBLICSERVERADDRESS]
+	* Username and password that can access all services
+	* Expiration - 1 year
+* Add token into config.js for the application
+* Configure other options in the config.js to the ennvironment
+* Install ArcGIS Server for Administrators on web server
+	* Copy the SpliceMaps folder to C:\inetpub\wwwroot
+	* Convert directory to application in IIS
 
 
 ## Resources
