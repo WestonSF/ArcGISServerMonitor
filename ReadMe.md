@@ -5,7 +5,7 @@ server admin API was built enabling access to administrative information about t
 have been built using Javascript that can query this API enabling the ArcGIS administrator to view and analyse useful information
 about the servers usage and performance. This information is displayed in the form of charts, maps and textual information.
 
-Based of an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/23/demo-applications-arcgis-server-for-administrators-sessions-at-the-2013-user-conference)
+Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/23/demo-applications-arcgis-server-for-administrators-sessions-at-the-2013-user-conference)
 
 [Demo](http://gis.mstn.govt.nz/AGSAdmin)
 
