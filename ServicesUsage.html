@@ -36,11 +36,12 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" id="title" href="ServicesDashboard.html"></a>
+          <a class="navbar-brand" id="title" href="ServicesPerformance.html"></a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="ServicesDashboard.html">Services Dashboard</a></li>
+            <li><a href="ServicesPerformance.html">Performance</a></li>
+            <li class="active"><a href="ServicesUsage.html">Usage</a></li>
             <li><a href="PopularExtents.html">Popular Extents</a></li>
           </ul>
         </div>
@@ -48,49 +49,26 @@
     </div>
 
 
-    <div id="ServicesDashboard" class="container">
-      <div class="jumbotron">
-        <h1>Services Dashboard</h1>
-	    <p>This application harvests logs from an ArcGIS Server over HTTP along with the statistics from Admin API to plot the usage for a service. 
-	    This is useful in determining if the servers are meeting request capacity or more computing is required.</p>
-        <div id="services">
-          <b>Service - </b><div class="btn-group">
-          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
-          <button class="btn btn-primary servicesSelection">Select Service</button>
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-          <ul id="servicesDropdown" class="dropdown-menu servicesDropdown" role="menu"></ul>
-        </div>
-        <div id="filter">
-          <b>Filter - </b><div class="btn-group">
-          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
-          <button class="btn btn-primary filterSelection">Select Filter</button>
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-          <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
-        </div>
+    <div id="ServicesUsage" class="container">
+        <div class="jumbotron">
+        <h1>Services Usage</h1>
+	    <p id="siteDescription"></p>
 
-        <div id="requestsPieChartContainer">
-            <h2>Success Rate</h2>
-            <div id="requestsPieChart"></div>
-            <div id="requestsPieLegend"></div>
-            <p id="totalRequests">Number of requests (max 10,000) - 0</p>
-        </div>
-        <br />
-        <div id="requestsTimeGaugeContainer">
-            <h2>Response Time</h2>
-            <div id="requestsTimeGauge"></div>
-            <br />
-            <p id="averageResponseTime">Average Response Time (seconds) - 0.0</p>
-        </div>
-        <br />
-        <div id="drawTimeGaugeContainer">
-            <h2>Draw Time</h2>
-            <div id="drawTimeGauge"></div>
-            <br />
-            <p id="totalDraws">Number of draw requests (max 10,000) - 0</p>
-            <p id="averageDrawTime">Average Draw Time (seconds) - 0.0</p>
-        </div>
+            <div id="services">
+                <b>Service - </b><div class="btn-group">
+                <i class="dropdown-arrow dropdown-arrow-inverse"></i>
+                <button class="btn btn-primary servicesSelection">Select Service</button>
+                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                <ul id="servicesDropdown" class="dropdown-menu servicesDropdown" role="menu"></ul>
+                </div>
+            </div>
 
-      </div>
+            <div id="serviceUseContainer">
+                <h2>Daily Draw Count</h2>
+                <div id="servicesUseChart"></div>
+            </div>
+
+        </div>
     </div>
 
     <!-- Bootstrap core JavaScript -->

@@ -16,9 +16,9 @@ var pieChart = null;
 // Pie legend
 var pieLegend = null;
 // Line chart
-var lineChart = null;
-// Gauge
-var gauge = null;
+var barChart = null;
+// Gauges
+var gauges = [];
 
 // -------------------------------------- Modules required --------------------------------------
 require([
@@ -45,8 +45,11 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
     initVariables();
 
     // Set the title
-    document.title = configOptions.Title;
-    $("#title").text(configOptions.Title);
+    document.title = configOptions.title;
+    $("#title").text(configOptions.title);
+
+    // Set the description
+    $("#siteDescription").text(configOptions.description);
 
     // Get the current page
     var pagePath = window.location.pathname;
@@ -182,13 +185,14 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
         });
     }
 
-    // Services dashboard
-    else {
+    // Services performance
+    if ((currentPage.indexOf("ServicesPerformance") != -1) | (currentPage.length == 0)) {
         // Show the progress bar and hide the graphs
         $("#appLoadBar").show();
         $("#requestsPieChartContainer").css('display', 'none');
         $("#requestsTimeGaugeContainer").css('display', 'none');
         $("#drawTimeGaugeContainer").css('display', 'none');
+        $("#availabilityContainer").css('display', 'none');
 
         // Get a list of services
         getAllServices("all", function (serviceList) {
@@ -222,6 +226,23 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 serviceChoice = serviceList[0];
             }
 
+            // Get available instances for the service
+            getServiceInstances(serviceChoice, function (service) {
+                $("#availabilityContainer").css('display', 'block');
+
+                $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
+                $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+
+                if (service.freeInstances > 0) {
+                    // Add the success label class
+                    $("#instancesAvailable").removeClass().addClass('label label-success');
+                }
+                else {
+                    // Add the danger label class
+                    $("#instancesAvailable").removeClass().addClass('label label-danger');
+                }
+            });
+
             // Scan the logs
             scanLogs();
 
@@ -232,6 +253,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 $("#requestsPieChartContainer").css('display', 'none');
                 $("#requestsTimeGaugeContainer").css('display', 'none');
                 $("#drawTimeGaugeContainer").css('display', 'none');
+                $("#availabilityContainer").css('display', 'none');
 
                 // Update dropdown and selection
                 $('.servicesSelection').text(this.innerHTML);
@@ -239,6 +261,23 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
                 // Clear previous graphics
                 clearGraphics();
+
+                // Get available instances for the service
+                getServiceInstances(serviceChoice, function (service) {
+                    $("#availabilityContainer").css('display', 'block');
+
+                    $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
+                    $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+
+                    if (service.freeInstances > 0) {
+                        // Add the success label class
+                        $("#instancesAvailable").removeClass().addClass('label label-success');
+                    }
+                    else {
+                        // Add the danger label class
+                        $("#instancesAvailable").removeClass().addClass('label label-danger');
+                    }
+                });
 
                 // Scan the logs
                 scanLogs();
@@ -250,6 +289,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 $("#requestsPieChartContainer").css('display', 'none');
                 $("#requestsTimeGaugeContainer").css('display', 'none');
                 $("#drawTimeGaugeContainer").css('display', 'none');
+                $("#availabilityContainer").css('display', 'none');
 
                 // Update dropdown and selection
                 $('.filterSelection').text(this.innerHTML);
@@ -258,11 +298,74 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 // Clear previous graphics
                 clearGraphics();
 
+                // Get available instances for the service
+                getServiceInstances(serviceChoice, function (service) {
+                    $("#availabilityContainer").css('display', 'block');
+
+                    $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
+                    $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+
+                    if (service.freeInstances > 0) {
+                        // Add the success label class
+                        $("#instancesAvailable").removeClass().addClass('label label-success');
+                    }
+                    else {
+                        // Add the danger label class
+                        $("#instancesAvailable").removeClass().addClass('label label-danger');
+                    }
+                });
+
                 // Scan the logs
                 scanLogs();
             });
         });
     }
+
+    // Services usage
+    if (currentPage.indexOf("ServicesUsage") != -1) {
+        // Show the progress bar and hide the graphs
+        $("#appLoadBar").show();
+        $("#serviceUseContainer").css('display', 'none');
+
+        // Get a list of services
+        getAllServices("mapServices", function (serviceList) {
+            // Add values into services dropdown
+            array.forEach(serviceList, function (service) {
+                $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
+            });
+            // Set default selection
+            if (configOptions.defaultService) {
+                $('.servicesSelection').text(configOptions.defaultService);
+                serviceChoice = configOptions.defaultService;
+            }
+            else {
+                // Set the first service in the list
+                $('.servicesSelection').text(serviceList[0]);
+                serviceChoice = serviceList[0];
+            }
+
+            // Set the filter choice to last 30 days
+            filterChoice = "Last 30 Days"
+
+            // Scan the logs
+            scanLogs();
+
+            // On change handler for services dropdown
+            $('.servicesDropdown li > a').click(function (e) {
+                // Show the progress bar and hide the graphs
+                $("#appLoadBar").show();
+                $("#serviceUseContainer").css('display', 'none');
+
+                // Update dropdown and selection
+                $('.servicesSelection').text(this.innerHTML);
+                serviceChoice = this.innerHTML;
+
+                // Scan the logs
+                scanLogs();
+            });
+        });
+    }
+
     // ----------------------------------------------------------------------------------------------------
 
 
@@ -362,13 +465,14 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                     }
                 }
                 // Update draw request count
-                $("#totalDraws").text("Number of draw requests (max 10,000) - " + commaSeparateNumber(drawRequestCount));
+                $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
 
                 // Hide the progress bar
                 $("#appLoadBar").hide();
             }
-            // Services dashboard
-            else {
+
+            // Services performance
+            if ((currentPage.indexOf("ServicesPerformance") != -1) | (currentPage.length == 0)) {
                 // For each of the logs
                 for (var i = 0; i < logs.length; i++) {
                     var record = logs[i];
@@ -412,15 +516,17 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
                 // Get the average draw time
                 averageDrawTime = totalDrawTime / drawRequestCount
-
+                if (isNaN(averageDrawTime)) {
+                    averageDrawTime = 0;
+                }
                 // Get the total requests
                 var totalRequests = commaSeparateNumber(parseInt(sucTotal) + parseInt(warnTotal) + parseInt(errTotal));
 
                 // Update request count
-                $("#totalRequests").text("Number of requests (max 10,000) - " + totalRequests);
+                $("#totalRequests").text("Number of requests - " + totalRequests);
 
                 // Update draw request count
-                $("#totalDraws").text("Number of draw requests (max 10,000) - " + commaSeparateNumber(drawRequestCount));
+                $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
 
                 // Update average response time
                 $("#averageResponseTime").text("Average Response Time (seconds) - " + accessTime.toFixed(2));
@@ -428,34 +534,167 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 // Update average draw time
                 $("#averageDrawTime").text("Average Draw Time (seconds) - " + averageDrawTime.toFixed(2));
 
-                // If charts haven't been created
+                // If pie chart hasn't been created
                 if (!pieChart) {
                     // create the pie chart for requests
                     createPieChart("requestsPieChart", logData);
+                    // Show the chart
+                    $("#requestsPieChartContainer").css('display', 'block');
                 }
-                    // Update chart
+                // Update chart
                 else {
                     pieChart.updateSeries("report", logData);
                     pieChart.render();
                     pieLegend.refresh();
+                    // Show the chart
+                    $("#requestsPieChartContainer").css('display', 'block');
                 }
-                if (!gauge) {
+
+                // If gauges haven't been created
+                if (!gauges[0]) {
                     // Create the gauge for average requests
                     createGauge("requestsTimeGauge", accessTime);
-                    // Create the gauge for average draw time
-                    createGauge("drawTimeGauge", averageDrawTime);
+                    // Show the chart
+                    $("#requestsTimeGaugeContainer").css('display', 'block');
+                }
+                // Update chart
+                else {
+                    gauges[0].indicators[0].value = accessTime;
+                    gauges[0].startup();
+                    // Show the chart
+                    $("#requestsTimeGaugeContainer").css('display', 'block');
+                }
+                if (!gauges[1]) {
+                    // Only show draw time for map services
+                    var serviceType = serviceChoice.split(".");
+                    if (serviceType[1] == "MapServer") {
+                        // Create the gauge for average draw time
+                        createGauge("drawTimeGauge", averageDrawTime);
+                        // Show the chart
+                        $("#drawTimeGaugeContainer").css('display', 'block');
+                    }
+                }
+                // Update chart
+                else {
+                    // Only show draw time for map services
+                    var serviceType = serviceChoice.split(".");
+                    if (serviceType[1] == "MapServer") {
+                        gauges[1].indicators[0].value = averageDrawTime;
+                        gauges[1].startup();
+                        // Show the chart
+                        $("#drawTimeGaugeContainer").css('display', 'block');
+                    }
+                }
+
+                // Hide the progress bar
+                $("#appLoadBar").hide();
+            }
+
+            // Services usage
+            if (currentPage.indexOf("ServicesUsage") != -1) {
+                // Array to hold draw records for past 30 days
+                var chartData = [];
+                var dateData = [];
+
+                // Set each of the days to zero
+                for (var i = 0; i < 30; i++) {
+                    chartData[i] = 0;
+                }
+
+                // For each of the logs
+                for (var i = 0; i < logs.length; i++) {
+                    var record = logs[i];
+                    var message = record["message"];
+
+                    // Get current unix time
+                    var unixTime = (new Date).getTime();
+
+                    // Get the records that request a draw
+                    if (message.search("End ExportMapImage") >= 0) {
+                        // Get the chart day
+                        var timeSince = unixTime - record.time;
+                        var day = 86400 * 1000;   
+                        var chartDay = parseFloat(timeSince / day);
+                        var firstDigit = chartDay.toString().split(".");
+
+                        // Add count to chart data array
+                        chartData[firstDigit[0]]++;
+                    }
+                }
+
+                // If bar chart hasn't been created
+
+                if (!barChart) {
+                    // Show the chart
+                    $("#serviceUseContainer").css('display', 'block');
+
+                    // Create the bar chart for requests
+                    createBarChart("servicesUseChart", chartData, function () {
+                        barChart.updateSeries("Daily Draw Count", chartData);
+
+                        // Update x-axis
+                        var labels = [];
+                        for (var i = 0; i < chartData.length; i++) {
+                            // Get current unix time
+                            var unixTime = (new Date).getTime();
+                            // Get the day
+                            var day = 86400 * 1000;
+
+                            // Setup label
+                            var unixTimeLabel = new Date(unixTime - ((i + 1) * day));
+                            var year = unixTimeLabel.getFullYear();
+                            var month = unixTimeLabel.getMonth();
+                            var date = unixTimeLabel.getDate();
+
+                            labels.push({ value: i + 1, text: date + "/" + (month + 1) + "/" + year });
+                        }
+                        barChart.addAxis("x", {
+                            labels: labels,
+                            title: 'Date',
+                            titleOrientation: 'away'
+                        });
+
+                        barChart.render();
+
+                        // Hide the progress bar
+                        $("#appLoadBar").hide();
+                    });
+
                 }
                     // Update chart
                 else {
-                    gauge.indicators[0].value = accessTime;
-                    gauge.startup();
-                }
+                    // Show the chart
+                    $("#serviceUseContainer").css('display', 'block');
 
-                // Hide the progress bar and show the graphs
-                $("#appLoadBar").hide();
-                $("#requestsPieChartContainer").css('display', 'block');
-                $("#requestsTimeGaugeContainer").css('display', 'block');
-                $("#drawTimeGaugeContainer").css('display', 'block');
+                    barChart.updateSeries("Daily Draw Count", chartData);
+
+                    // Update x-axis
+                    var labels = [];
+                    for (var i = 0; i < chartData.length; i++) {
+                        // Get current unix time
+                        var unixTime = (new Date).getTime();
+                        // Get the day
+                        var day = 86400 * 1000;
+
+                        // Setup label
+                        var unixTimeLabel = new Date(unixTime - ((i + 1) * day));
+                        var year = unixTimeLabel.getFullYear();
+                        var month = unixTimeLabel.getMonth();
+                        var date = unixTimeLabel.getDate();
+
+                        labels.push({ value: i + 1, text: date + "/" + (month+1) + "/" + year });
+                    }
+                    barChart.addAxis("x", {
+                        labels: labels,  
+                        title: 'Date',
+                        titleOrientation: 'away'
+                    });
+
+                    barChart.render();
+
+                    // Hide the progress bar
+                    $("#appLoadBar").hide();
+                }
             }
         }));
     }
@@ -479,12 +718,12 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
     // Get instances for a service
     function getServiceInstances(service,callback) {
-        var instanceList = [];
+        var instanceList;
 
         // Get stats for the service
         when(getServiceStatistics(service), lang.hitch(this, function (response) {
             // Get Instance usage and push into list
-            instanceList.push({ maxInstances: response.summary.max, freeInstance: response.summary.free, initializingInstances: response.summary.initializing, notCreatedInstances: response.summary.notCreated });
+            instanceList = { maxInstances: response.summary.max, freeInstances: response.summary.free, initializingInstances: response.summary.initializing, notCreatedInstances: response.summary.notCreated };
             
             callback(instanceList);
         }));
@@ -650,7 +889,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
             ];
 
             // Create the gauge
-            gauge = new dojox.gauges.AnalogGauge({
+            var gauge = new dojox.gauges.AnalogGauge({
                 id: node,
                 width: 350,
                 height: 200,
@@ -683,6 +922,9 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
             // Start the gauge
             gauge.startup();
+
+            // Push gauge into global array
+            gauges.push(gauge);
 
             return gauge;
         });
@@ -741,39 +983,54 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
     }
 
     // Create line chart
-    function createLineChart(node, chartData, min, max) {
+    function createBarChart(node, chartData, callback) {
         require([
             "dojox/charting/Chart",
-            "dojox/charting/plot2d/Pie",
-            "dojox/charting/widget/Legend",
-            "dojox/charting/themes/Tom",
-            "dojox/charting/action2d/Highlight",
+            "dojox/charting/themes/Renkoo",
+            "dojox/charting/plot2d/Columns",
             "dojox/charting/action2d/Tooltip",
             "dojox/charting/plot2d/Lines",
             "dojox/charting/plot2d/Markers",
             "dojox/charting/axis2d/Default",
         ],
-        function (chart,pie,legend,theme,highlight,tooltip,lines,markers,axisdefault) {
-            lineChart = new chart(dojo.byId(node));
+        function (chart, theme, columnsplot, tooltip, lines, markers, axisdefault) {
+            barChart = new chart(dojo.byId(node), {
+            });
 
             // Set the theme
             theme.chart.fill = "transparent";
             theme.plotarea.fill = "transparent";
-            lineChart.setTheme(theme);
+            barChart.setTheme(theme);
 
-            // create the axis
-            lineChart.addAxis("x");
-            lineChart.addAxis("y", { min: min, max: max, vertical: true, fixLower: "major", fixUpper: "major" });
+            // Add the only/default plot
+            barChart.addPlot("default", {
+                type: columnsplot,
+                markers: true,
+                gap: 5
+            });
 
-            // Add in chart data
-            array.forEach(chartData, lang.hitch(function (data, i) {
-                lineChart.addSeries(data.series, data.values);
-            }));
+            // Add axes
+            barChart.addAxis("x",
+            {
+                title: 'Date',
+                titleOrientation: 'away'
+            });
+
+            barChart.addAxis("y",
+            {
+                title: 'Draw Count',
+                vertical: true,
+                fixLower: "major",
+                fixUpper: "major"
+            });
+
+            // Add the series of data
+            barChart.addSeries("Daily Draw Count", chartData);
 
             // Render the chart
-            lineChart.render();
+            barChart.render();
 
-            return lineChart;
+            callback(barChart);
         });
     }
 
@@ -818,6 +1075,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
         // Get the date and time - convert from unix time
         var unixDate = new Date(unixTime);
+
         var year = unixDate.getFullYear();
         var month = unixDate.getMonth();
         var date = unixDate.getDate();
@@ -825,7 +1083,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
         var minutes = unixDate.getMinutes();
         var seconds = unixDate.getSeconds();
         var formattedTime = hours + ':' + minutes + ':' + seconds;
-        console.log("Stats showing from " + date + "/" + month + "/" + year + " at " + formattedTime);
+        console.log("Stats showing from " + date + "/" + (month+1) + "/" + year + " at " + formattedTime);
 
         var unixTimeEnd = filterEndTime;
         var unixDate = new Date(unixTimeEnd);
@@ -836,7 +1094,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
         var minutes = unixDate.getMinutes();
         var seconds = unixDate.getSeconds();
         var formattedTime = hours + ':' + minutes + ':' + seconds;
-        console.log("Stats showing to " + date + "/" + month + "/" + year + " at " + formattedTime);
+        console.log("Stats showing to " + date + "/" + (month+1) + "/" + year + " at " + formattedTime);
 
         esri.request({
             url: configOptions.agsSite + "/admin/logs/query" + "?token=" + configOptions.agsToken,

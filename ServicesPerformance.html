@@ -9,8 +9,8 @@
 
     <!-- Stylesheets -->
     <link href="libraries/bootstrap/3.0.2/css/bootstrap.css" rel="stylesheet">
-    <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/esri/css/esri.css">
     <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/dojo/dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" href="http://js.arcgis.com/3.7/js/esri/css/esri.css">
     <link rel="stylesheet" href="css/main.css" />
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -21,7 +21,7 @@
   </head>
 
   <body>
-    <!-- Progress bar -->
+    <!-- Application progress bar -->
     <div id="appLoadBar" class="progress progress-striped active">
       <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
@@ -40,22 +40,22 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href="ServicesPerformance.html">Performance</a></li>
+            <li class="active"><a href="ServicesPerformance.html">Performance</a></li>
             <li><a href="ServicesUsage.html">Usage</a></li>
-            <li class="active"><a href="PopularExtents.html">Popular Extents</a></li>
+            <li><a href="PopularExtents.html">Popular Extents</a></li>
           </ul>
         </div>
       </div>
     </div>
 
 
-    <div id="PopularExtents" class="container">
+    <div id="ServicesPerformance" class="container">
       <div class="jumbotron">
-        <h1>Popular Extents</h1>
+        <h1>Services Performance</h1>
 	    <p id="siteDescription"></p>
 
         <div id="services">
-          <b>Map Service - </b><div class="btn-group">
+          <b>Service - </b><div class="btn-group">
           <i class="dropdown-arrow dropdown-arrow-inverse"></i>
           <button class="btn btn-primary servicesSelection">Select Service</button>
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
@@ -68,19 +68,39 @@
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
           <ul id="filterDropdown" class="dropdown-menu filterDropdown" role="menu"></ul>
         </div>
-        <div id="graphic">
-          <b>Graphic - </b><div class="btn-group">
-          <i class="dropdown-arrow dropdown-arrow-inverse"></i>
-          <button class="btn btn-primary graphicSelection">Select Graphic</button>
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-          <ul id="graphicDropdown" class="dropdown-menu graphicDropdown" role="menu"></ul>
+
+        <div id="availabilityContainer">
+            <h2>Availability</h2>
+            <span id="maxInstances" class="label label-primary">Maximum Instances - 0</span>
+            <br />
+            <span id="instancesAvailable">Instances Available - 0</span>
         </div>
-        <div id="map"></div>
-        <p id="totalDraws">Number of draw requests - 0</p>
+
+        <div id="requestsPieChartContainer">
+            <h2>Success Rate</h2>
+            <div id="requestsPieChart"></div>
+            <div id="requestsPieLegend"></div>
+            <p id="totalRequests">Number of requests (max 10,000) - 0</p>
+        </div>
+        <br />
+        <div id="requestsTimeGaugeContainer">
+            <h2>Response Time</h2>
+            <div id="requestsTimeGauge"></div>
+            <br />
+            <p id="averageResponseTime">Average Response Time (seconds) - 0.0</p>
+        </div>
+        <br />
+        <div id="drawTimeGaugeContainer">
+            <h2>Draw Time</h2>
+            <div id="drawTimeGauge"></div>
+            <br />
+            <p id="totalDraws">Number of draw requests - 0</p>
+            <p id="averageDrawTime">Average Draw Time (seconds) - 0.0</p>
+        </div>
+
       </div>
     </div>
       </div>
-    </div>
     </div>
 
     <!-- Bootstrap core JavaScript -->
