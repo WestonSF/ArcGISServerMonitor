@@ -19,6 +19,10 @@ var pieLegend = null;
 var barChart = null;
 // Gauges
 var gauges = [];
+// Feature set holding extent points
+var extentFeatures = [];
+// Hot spot feature layer
+var hotspotLayer = null;
 
 // -------------------------------------- Modules required --------------------------------------
 require([
@@ -27,6 +31,7 @@ require([
     "esri/graphic",
     "esri/layers/agstiled",
     "esri/layers/agsdynamic",
+    "esri/layers/FeatureLayer",
     "esri/request",
 
     // Dojo modules
@@ -40,7 +45,7 @@ require([
 
 
 // -------------------------------------- Main function executed when DOM ready --------------------------------------
-function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferred, domConst) {
+function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array, when, deferred, domConst) {
     // Load the configuration file
     initVariables();
 
@@ -57,6 +62,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
 
     // Setup proxy
     esri.config.defaults.io.proxyUrl = configOptions.proxyUrl;
+    esriConfig.defaults.io.alwaysUseProxy = false;
 
     // Popular extents
     if (currentPage.indexOf("PopularExtents") != -1) {
@@ -464,11 +470,101 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                         drawRequestCount++;
                     }
                 }
-                // Update draw request count
-                $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
 
-                // Hide the progress bar
-                $("#appLoadBar").hide();
+                // If graphic to be shown is hot spot
+                if (graphicChoice == "Hot Spot") {
+                    // Request a token for the service if secure
+                    if (configOptions.hotSpotAnalysisService.secure === "true" || configOptions.hotSpotAnalysisService.secure === true) {
+                        getToken(configOptions.hotSpotAnalysisService.tokenURL, configOptions.hotSpotAnalysisService.username, configOptions.hotSpotAnalysisService.password, function (token) {
+                            var extentFeatureSet = new esri.tasks.FeatureSet();
+                            extentFeatureSet.geometryType = "esriGeometryPoint";
+                            extentFeatureSet.spatialReference = map.spatialReference;
+                            extentFeatureSet.features = extentFeatures;
+                            var extentFeatureSetJSON = dojo.toJson(extentFeatureSet.toJson());
+
+                            var extentFeatureCollection = "{\"layerDefinition\": {\"geometryType\": \"esriGeometryPoint\",\"fields\": [{\"name\": \"Id\",\"type\": \"esriFieldTypeOID\",\"alias\": \"Id\"}]},\"featureSet\": " + extentFeatureSetJSON + "}";
+
+                            // Setup the hotspot task and parameters
+                            hotSpotAnalysisTask = new esri.tasks.Geoprocessor(configOptions.hotSpotAnalysisService.url + "?token=" + token);
+                            var params = {
+                                "analysisLayer": extentFeatureCollection
+                            };
+
+                            // Submit the hot spot analysis tool task
+                            hotSpotAnalysisTask.submitJob(params, function (jobInfo) {
+                                completeCallback(jobInfo,token);
+                            });
+
+                        });
+
+                        // When task is complete
+                        function completeCallback(jobInfo,token) {
+                            // If job completed successfully
+                            if (jobInfo.jobStatus !== "esriJobFailed") {
+                                // Get the result
+                                esri.request({
+                                    url: configOptions.hotSpotAnalysisService.url + "/jobs/" + jobInfo.jobId + "/results/hotSpotsResultLayer?token=" + token,
+                                    preventCache: true,
+                                    content: {
+                                        "f": "json"
+                                    },
+                                    handleAs: "json",
+                                    useProxy: true
+                                }).
+                                // On response
+                                then(function (response) {
+                                    if (response.value) {
+                                        // Log feature collection response
+                                        console.log("Hot spot analysis response:");
+                                        console.log(response.value);
+ 
+                                        // Setup feature layer
+                                        hotspotLayer = new featurelayer(response.value, {
+                                            id: "resultLayer"
+                                        });
+                                        
+                                        // Add layer to map
+                                        map.addLayer(hotspotLayer);
+                                    }
+
+                                    // Update draw request count
+                                    $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
+                                    // Hide the progress bar
+                                    $("#appLoadBar").hide();
+                                },
+                                // On error
+                                function (err) {
+                                    // Update draw request count
+                                    $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
+                                    // Hide the progress bar
+                                    $("#appLoadBar").hide();
+                                });
+
+
+                                // Update draw request count
+                                $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
+                                // Hide the progress bar
+                                $("#appLoadBar").hide();
+                            }
+                            // If failed
+                            else {
+                                console.log("There was an error:");
+                                console.log(jobInfo.messages[0].description);
+
+                                // Update draw request count
+                                $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
+                                // Hide the progress bar
+                                $("#appLoadBar").hide();
+                            }
+                        }
+                    }
+                }
+                else {
+                    // Update draw request count
+                    $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
+                    // Hide the progress bar
+                    $("#appLoadBar").hide();
+                }
             }
 
             // Services performance
@@ -762,16 +858,26 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
             var centerPointCoords = extent.getCenter();
             // Get the symbology
             var pointSymbol = configOptions.pointSymbol;
-            // Add point graphic to map
-            map.graphics.add(new esri.Graphic(centerPointCoords, pointSymbol));
+
+            // Setup graphic
+            var graphic = new esri.Graphic(centerPointCoords, pointSymbol);
+            // Push graphic into features
+            extentFeatures.push(graphic);
         }
     }
 
 
     // Clears all the graphics from the map
     function clearGraphics() {
+        // Clear graphics
         if (map.graphics != undefined) {
             map.graphics.clear();
+        }
+        // Clear hot spot layer
+        if (hotspotLayer != null) {
+            map.removeLayer(hotspotLayer)
+            hotspotLayer = null;
+            extentFeatures = [];
         }
     }
 
@@ -1099,7 +1205,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
         esri.request({
             url: configOptions.agsSite + "/admin/logs/query" + "?token=" + configOptions.agsToken,
             preventCache: true,
-            useProxy: false,
+            useProxy: true,
             handleAs: "json",
             content: {
                 "level": "FINE",
@@ -1148,7 +1254,7 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
                 "f": "json"
             },
             handleAs: "json",
-            useProxy: false
+            useProxy: true
         }).
         // On response
         then(function (response) {
@@ -1159,6 +1265,28 @@ function (map, graphic, agstiled, agsdynamic, request, lang, array, when, deferr
             dfd.resolve();
         });
         return dfd.promise;
+    }
+
+    // Get a token for a secure service
+    function getToken(url, username, password, callback) {
+        var tokenRequest = url + "/generateToken?username=" + username + "&password=" + password + "&referer=http://localhost&expiration=5&f=json";
+
+        // Make request to server for json data
+        $.ajax({
+            url: tokenRequest,
+            dataType: "jsonp",
+            type: "GET",
+            crossDomain: true,
+            // Successful request
+            success: function (data) {
+                var token = data.token;
+                callback(token);
+            },
+            // Error in request
+            error: function (xhr, status, error) {
+                console.log(error);
+            }
+        });
     }
     // ----------------------------------------------------------------------------------------------------
 });
