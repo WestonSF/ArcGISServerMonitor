@@ -5,6 +5,8 @@ var serviceChoice = null;
 var filterChoice = null;
 // Current graphic selected
 var graphicChoice = null;
+// Type of service selected
+var serviceType = null;
 // Log data dictionary
 var logData = [
   { text: "Warning", y: 1 },
@@ -126,68 +128,82 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             }
 
             // Add values into services dropdown
+            var count = 0;
             array.forEach(serviceList, function (service) {
-                $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
+                // Get info for the service
+                when(getServiceInfo(service), lang.hitch(this, function (response) {
+                    count++;
+                    // If not cached add to list
+                    if (response.properties.isCached == "false") {
+                        $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
+                    }
+
+                    // When adding the last service
+                    if (count == serviceList.length) {
+                        // Set default selection
+                        if (configOptions.defaultService) {
+                            $('.servicesSelection').text(configOptions.defaultService);
+                            serviceChoice = configOptions.defaultService;
+                        }
+                        else {
+                            // Set the first service in the list
+                            $('.servicesSelection').text(serviceList[0]);
+                            serviceChoice = serviceList[0];
+                        }
+
+                        // Scan the logs and plot the extents
+                        scanLogs();
+
+                        // On change handler for services dropdown
+                        $('.servicesDropdown li > a').click(function (e) {
+                            // Show the progress bar
+                            $("#appLoadBar").show();
+
+                            // Update dropdown and selection
+                            $('.servicesSelection').text(this.innerHTML);
+                            serviceChoice = this.innerHTML;
+
+                            // Clear previous graphics
+                            clearGraphics();
+
+                            // Scan the logs and plot the extents
+                            scanLogs();
+                        });
+                        // On change handler for filter dropdown
+                        $('.filterDropdown li > a').click(function (e) {
+                            // Show the progress bar
+                            $("#appLoadBar").show();
+
+                            // Update dropdown and selection
+                            $('.filterSelection').text(this.innerHTML);
+                            filterChoice = this.innerHTML;
+
+                            // Clear previous graphics
+                            clearGraphics();
+
+                            // Scan the logs and plot the extents
+                            scanLogs();
+                        });
+                        // On change handler for graphic dropdown
+                        $('.graphicDropdown li > a').click(function (e) {
+                            // Show the progress bar
+                            $("#appLoadBar").show();
+
+                            // Update dropdown and selection
+                            $('.graphicSelection').text(this.innerHTML);
+                            graphicChoice = this.innerHTML;
+
+                            // Clear previous graphics
+                            clearGraphics();
+
+                            // Scan the logs and plot the extents
+                            scanLogs();
+                        });
+                    }
+                }));
+
             });
-            // Set default selection
-            if (configOptions.defaultService) {
-                $('.servicesSelection').text(configOptions.defaultService);
-                serviceChoice = configOptions.defaultService;
-            }
-            else {
-                // Set the first service in the list
-                $('.servicesSelection').text(serviceList[0]);
-                serviceChoice = serviceList[0];
-            }
 
-            // Scan the logs and plot the extents
-            scanLogs();
-
-            // On change handler for services dropdown
-            $('.servicesDropdown li > a').click(function (e) {
-                // Show the progress bar
-                $("#appLoadBar").show();
-
-                // Update dropdown and selection
-                $('.servicesSelection').text(this.innerHTML);
-                serviceChoice = this.innerHTML;
-
-                // Clear previous graphics
-                clearGraphics();
-
-                // Scan the logs and plot the extents
-                scanLogs();
-            });
-            // On change handler for filter dropdown
-            $('.filterDropdown li > a').click(function (e) {
-                // Show the progress bar
-                $("#appLoadBar").show();
-
-                // Update dropdown and selection
-                $('.filterSelection').text(this.innerHTML);
-                filterChoice = this.innerHTML;
-
-                // Clear previous graphics
-                clearGraphics();
-
-                // Scan the logs and plot the extents
-                scanLogs();
-            });
-            // On change handler for graphic dropdown
-            $('.graphicDropdown li > a').click(function (e) {
-                // Show the progress bar
-                $("#appLoadBar").show();
-
-                // Update dropdown and selection
-                $('.graphicSelection').text(this.innerHTML);
-                graphicChoice = this.innerHTML;
-
-                // Clear previous graphics
-                clearGraphics();
-
-                // Scan the logs and plot the extents
-                scanLogs();
-            });
         });
     }
 
@@ -232,41 +248,41 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 serviceChoice = serviceList[0];
             }
 
-            // Get available instances for the service
-            getServiceInstances(serviceChoice, function (service) {
+            // Get status for service
+            when(getServiceStatus(serviceChoice), lang.hitch(this, function (response) {
                 $("#availabilityContainer").css('display', 'block');
 
-                $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
-                $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
-
-                if (service.freeInstances > 0) {
-                    // Add the success label class
-                    $("#instancesAvailable").removeClass().addClass('label label-success');
+                if (response.realTimeState == "STARTED") {
+                    // Add the success label class and update text
+                    $('#serviceStatus').text("Status - Started");
+                    $("#serviceStatus").removeClass().addClass('label label-success');
                 }
                 else {
-                    // Add the danger label class
+                    // Add the danger label class and update text
+                    $('#serviceStatus').text("Status - Stopped");
                     $("#instancesAvailable").removeClass().addClass('label label-danger');
                 }
-            });
+            }));
 
-            // Scan the logs
-            scanLogs();
+            // Get info for the service
+            when(getServiceInfo(serviceChoice), lang.hitch(this, function (response) {
+                $("#availabilityContainer").css('display', 'block');
 
-            // On change handler for services dropdown
-            $('.servicesDropdown li > a').click(function (e) {
-                // Show the progress bar and hide the graphs
-                $("#appLoadBar").show();
-                $("#requestsPieChartContainer").css('display', 'none');
-                $("#requestsTimeGaugeContainer").css('display', 'none');
-                $("#drawTimeGaugeContainer").css('display', 'none');
-                $("#availabilityContainer").css('display', 'none');
-
-                // Update dropdown and selection
-                $('.servicesSelection').text(this.innerHTML);
-                serviceChoice = this.innerHTML;
-
-                // Clear previous graphics
-                clearGraphics();
+                // Update cache information
+                if (response.properties.isCached != null) {
+                    if (response.properties.isCached == "true") {
+                        $('#cacheStatus').text("Cached Map Service");
+                        serviceType = "MapServerCached";
+                    }
+                    if (response.properties.isCached == "false") {
+                        $('#cacheStatus').text("Dynamic Map Service");
+                        serviceType = "MapServer";
+                    }
+                }
+                else {
+                    $('#cacheStatus').text("ArcGIS Service");
+                    serviceType = "OtherServer";
+                }
 
                 // Get available instances for the service
                 getServiceInstances(serviceChoice, function (service) {
@@ -287,43 +303,156 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                 // Scan the logs
                 scanLogs();
-            });
-            // On change handler for filter dropdown
-            $('.filterDropdown li > a').click(function (e) {
-                // Show the progress bar and hide the graphs
-                $("#appLoadBar").show();
-                $("#requestsPieChartContainer").css('display', 'none');
-                $("#requestsTimeGaugeContainer").css('display', 'none');
-                $("#drawTimeGaugeContainer").css('display', 'none');
-                $("#availabilityContainer").css('display', 'none');
 
-                // Update dropdown and selection
-                $('.filterSelection').text(this.innerHTML);
-                filterChoice = this.innerHTML;
+                // On change handler for services dropdown
+                $('.servicesDropdown li > a').click(function (e) {
+                    // Show the progress bar and hide the graphs
+                    $("#appLoadBar").show();
+                    $("#requestsPieChartContainer").css('display', 'none');
+                    $("#requestsTimeGaugeContainer").css('display', 'none');
+                    $("#drawTimeGaugeContainer").css('display', 'none');
+                    $("#availabilityContainer").css('display', 'none');
 
-                // Clear previous graphics
-                clearGraphics();
+                    // Update dropdown and selection
+                    $('.servicesSelection').text(this.innerHTML);
+                    serviceChoice = this.innerHTML;
 
-                // Get available instances for the service
-                getServiceInstances(serviceChoice, function (service) {
-                    $("#availabilityContainer").css('display', 'block');
+                    // Clear previous graphics
+                    clearGraphics();
 
-                    $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
-                    $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+                    // Get status for service
+                    when(getServiceStatus(serviceChoice), lang.hitch(this, function (response) {
+                        $("#availabilityContainer").css('display', 'block');
 
-                    if (service.freeInstances > 0) {
-                        // Add the success label class
-                        $("#instancesAvailable").removeClass().addClass('label label-success');
-                    }
-                    else {
-                        // Add the danger label class
-                        $("#instancesAvailable").removeClass().addClass('label label-danger');
-                    }
+                        if (response.realTimeState == "STARTED") {
+                            // Add the success label class and update text
+                            $('#serviceStatus').text("Status - Started");
+                            $("#serviceStatus").removeClass().addClass('label label-success');
+                        }
+                        else {
+                            // Add the danger label class and update text
+                            $('#serviceStatus').text("Status - Stopped");
+                            $("#instancesAvailable").removeClass().addClass('label label-danger');
+                        }
+                    }));
+
+                    // Get info for the service
+                    when(getServiceInfo(serviceChoice), lang.hitch(this, function (response) {
+                        $("#availabilityContainer").css('display', 'block');
+
+                        // Update cache information
+                        if (response.properties.isCached != null) {
+                            if (response.properties.isCached == "true") {
+                                $('#cacheStatus').text("Cached Map Service");
+                                serviceType = "MapServerCached";
+                            }
+                            if (response.properties.isCached == "false") {
+                                $('#cacheStatus').text("Dynamic Map Service");
+                                serviceType = "MapServer";
+                            }
+                        }
+                        else {
+                            $('#cacheStatus').text("ArcGIS Service");
+                            serviceType = "OtherServer";
+                        }
+
+                        // Get available instances for the service
+                        getServiceInstances(serviceChoice, function (service) {
+                            $("#availabilityContainer").css('display', 'block');
+
+                            $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
+                            $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+
+                            if (service.freeInstances > 0) {
+                                // Add the success label class
+                                $("#instancesAvailable").removeClass().addClass('label label-success');
+                            }
+                            else {
+                                // Add the danger label class
+                                $("#instancesAvailable").removeClass().addClass('label label-danger');
+                            }
+                        });
+
+                        // Scan the logs
+                        scanLogs();
+
+                    }));
                 });
 
-                // Scan the logs
-                scanLogs();
-            });
+                // On change handler for filter dropdown
+                $('.filterDropdown li > a').click(function (e) {
+                    // Show the progress bar and hide the graphs
+                    $("#appLoadBar").show();
+                    $("#requestsPieChartContainer").css('display', 'none');
+                    $("#requestsTimeGaugeContainer").css('display', 'none');
+                    $("#drawTimeGaugeContainer").css('display', 'none');
+                    $("#availabilityContainer").css('display', 'none');
+
+                    // Update dropdown and selection
+                    $('.filterSelection').text(this.innerHTML);
+                    filterChoice = this.innerHTML;
+
+                    // Clear previous graphics
+                    clearGraphics();
+
+                    // Get status for service
+                    when(getServiceStatus(serviceChoice), lang.hitch(this, function (response) {
+                        $("#availabilityContainer").css('display', 'block');
+
+                        if (response.realTimeState == "STARTED") {
+                            // Add the success label class and update text
+                            $('#serviceStatus').text("Status - Started");
+                            $("#serviceStatus").removeClass().addClass('label label-success');
+                        }
+                        else {
+                            // Add the danger label class and update text
+                            $('#serviceStatus').text("Status - Stopped");
+                            $("#instancesAvailable").removeClass().addClass('label label-danger');
+                        }
+                    }));
+
+                    // Get info for the service
+                    when(getServiceInfo(serviceChoice), lang.hitch(this, function (response) {
+                        $("#availabilityContainer").css('display', 'block');
+
+                        // Update cache information
+                        if (response.properties.isCached != null) {
+                            if (response.properties.isCached == "true") {
+                                $('#cacheStatus').text("Cached Map Service");
+                                serviceType = "MapServerCached";
+                            }
+                            if (response.properties.isCached == "false") {
+                                $('#cacheStatus').text("Dynamic Map Service");
+                                serviceType = "MapServer";
+                            }
+                        }
+                        else {
+                            $('#cacheStatus').text("ArcGIS Service");
+                            serviceType = "OtherServer";
+                        }
+
+                        // Get available instances for the service
+                        getServiceInstances(serviceChoice, function (service) {
+                            $("#availabilityContainer").css('display', 'block');
+
+                            $('#maxInstances').text("Maximum Instances - " + service.maxInstances);
+                            $('#instancesAvailable').text("Instances Available - " + service.freeInstances);
+
+                            if (service.freeInstances > 0) {
+                                // Add the success label class
+                                $("#instancesAvailable").removeClass().addClass('label label-success');
+                            }
+                            else {
+                                // Add the danger label class
+                                $("#instancesAvailable").removeClass().addClass('label label-danger');
+                            }
+                        });
+
+                        // Scan the logs
+                        scanLogs();
+                    }));
+                });
+            }));
         });
     }
 
@@ -336,38 +465,51 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         // Get a list of services
         getAllServices("mapServices", function (serviceList) {
             // Add values into services dropdown
+            var count = 0;
             array.forEach(serviceList, function (service) {
-                $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
-            });
-            // Set default selection
-            if (configOptions.defaultService) {
-                $('.servicesSelection').text(configOptions.defaultService);
-                serviceChoice = configOptions.defaultService;
-            }
-            else {
-                // Set the first service in the list
-                $('.servicesSelection').text(serviceList[0]);
-                serviceChoice = serviceList[0];
-            }
+                // Get info for the service
+                when(getServiceInfo(service), lang.hitch(this, function (response) {
+                    count++;
+                    // If not cached add to list
+                    if (response.properties.isCached == "false") {
+                        $("#servicesDropdown").append('<li><a href="#servicesDropdown">' + service + '</a></li>');
+                    }
 
-            // Set the filter choice to last 30 days
-            filterChoice = "Last 30 Days"
+                    // When adding the last service
+                    if (count == serviceList.length) {
+                        // Set default selection
+                        if (configOptions.defaultService) {
+                            $('.servicesSelection').text(configOptions.defaultService);
+                            serviceChoice = configOptions.defaultService;
+                        }
+                        else {
+                            // Set the first service in the list
+                            $('.servicesSelection').text(serviceList[0]);
+                            serviceChoice = serviceList[0];
+                        }
 
-            // Scan the logs
-            scanLogs();
+                        // Set the filter choice to last 30 days
+                        filterChoice = "Last 30 Days"
 
-            // On change handler for services dropdown
-            $('.servicesDropdown li > a').click(function (e) {
-                // Show the progress bar and hide the graphs
-                $("#appLoadBar").show();
-                $("#serviceUseContainer").css('display', 'none');
+                        // Scan the logs
+                        scanLogs();
 
-                // Update dropdown and selection
-                $('.servicesSelection').text(this.innerHTML);
-                serviceChoice = this.innerHTML;
+                        // On change handler for services dropdown
+                        $('.servicesDropdown li > a').click(function (e) {
+                            // Show the progress bar and hide the graphs
+                            $("#appLoadBar").show();
+                            $("#serviceUseContainer").css('display', 'none');
 
-                // Scan the logs
-                scanLogs();
+                            // Update dropdown and selection
+                            $('.servicesSelection').text(this.innerHTML);
+                            serviceChoice = this.innerHTML;
+
+                            // Scan the logs
+                            scanLogs();
+                        });
+                    }
+
+                }));
             });
         });
     }
@@ -573,7 +715,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 for (var i = 0; i < logs.length; i++) {
                     var record = logs[i];
                     var message = record["message"];
-
+                    
+                    
                     // Get the records that request a draw
                     if (message.search("End ExportMapImage") >= 0) {
                         // Add to total draw time
@@ -632,38 +775,49 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                 // If pie chart hasn't been created
                 if (!pieChart) {
-                    // create the pie chart for requests
-                    createPieChart("requestsPieChart", logData);
-                    // Show the chart
-                    $("#requestsPieChartContainer").css('display', 'block');
+                    // Only show requests for non cached map services and other services
+                    if (serviceType != "MapServerCached") {
+                        // create the pie chart for requests
+                        createPieChart("requestsPieChart", logData);
+                        // Show the chart
+                        $("#requestsPieChartContainer").css('display', 'block');
+                    }
                 }
                 // Update chart
                 else {
-                    pieChart.updateSeries("report", logData);
-                    pieChart.render();
-                    pieLegend.refresh();
-                    // Show the chart
-                    $("#requestsPieChartContainer").css('display', 'block');
+                    // Only show requests for non cached map services and other services
+                    if (serviceType != "MapServerCached") {
+                        pieChart.updateSeries("report", logData);
+                        pieChart.render();
+                        pieLegend.refresh();
+                        // Show the chart
+                        $("#requestsPieChartContainer").css('display', 'block');
+                    }
                 }
 
                 // If gauges haven't been created
                 if (!gauges[0]) {
-                    // Create the gauge for average requests
-                    createGauge("requestsTimeGauge", accessTime);
-                    // Show the chart
-                    $("#requestsTimeGaugeContainer").css('display', 'block');
+                    // Only show response time for non cached map services and other services
+                    if (serviceType != "MapServerCached") {
+                        // Create the gauge for average requests
+                        createGauge("requestsTimeGauge", accessTime);
+                        // Show the chart
+                        $("#requestsTimeGaugeContainer").css('display', 'block');
+                    }
                 }
                 // Update chart
                 else {
-                    gauges[0].indicators[0].value = accessTime;
-                    gauges[0].startup();
-                    // Show the chart
-                    $("#requestsTimeGaugeContainer").css('display', 'block');
+                    // Only show response time for non cached map services and other services
+                    if (serviceType != "MapServerCached") {
+                        gauges[0].indicators[0].value = accessTime;
+                        gauges[0].startup();
+                        // Show the chart
+                        $("#requestsTimeGaugeContainer").css('display', 'block');
+                    }
                 }
                 if (!gauges[1]) {
                     // Only show draw time for map services
-                    var serviceType = serviceChoice.split(".");
-                    if (serviceType[1] == "MapServer") {
+                    if (serviceType == "MapServer") {
                         // Create the gauge for average draw time
                         createGauge("drawTimeGauge", averageDrawTime);
                         // Show the chart
@@ -673,8 +827,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 // Update chart
                 else {
                     // Only show draw time for map services
-                    var serviceType = serviceChoice.split(".");
-                    if (serviceType[1] == "MapServer") {
+                    if (serviceType == "MapServer") {
                         gauges[1].indicators[0].value = averageDrawTime;
                         gauges[1].startup();
                         // Show the chart
@@ -1222,6 +1375,43 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         return dfd.promise;
     }
 
+    // Get service status
+    function getServiceStatus(service) {
+        var dfd = new deferred();
+
+        request({
+            url: configOptions.agsSite + "/admin/services/" + service + "/status"  + "?token=" + configOptions.agsToken,
+            preventCache: true,
+            content: {
+                "f": "json"
+            },
+            handleAs: "json"
+        }).then(function (response) {
+            dfd.resolve(response);
+        }, function (err) {
+            dfd.resolve(err);
+        });
+        return dfd.promise;
+    }
+
+    // Get service info
+    function getServiceInfo(service) {
+        var dfd = new deferred();
+
+        request({
+            url: configOptions.agsSite + "/admin/services/" + service + "?token=" + configOptions.agsToken,
+            preventCache: true,
+            content: {
+                "f": "json"
+            },
+            handleAs: "json"
+        }).then(function (response) {
+            dfd.resolve(response);
+        }, function (err) {
+            dfd.resolve(err);
+        });
+        return dfd.promise;
+    }
 
     // Get service statistics
     function getServiceStatistics(service) {
@@ -1262,7 +1452,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         },
         // On error
         function (err) {
-            dfd.resolve();
+            dfd.resolve(err);
         });
         return dfd.promise;
     }

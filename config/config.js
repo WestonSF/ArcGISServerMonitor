@@ -46,7 +46,7 @@ function initVariables() {
             tokenURL: "https://www.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
             username: "splicegroup",
-            password: "arcinfo"
+            password: "*****"
         }   
     };
 }

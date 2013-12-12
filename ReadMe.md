@@ -15,7 +15,9 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 ## Features
 
 * Service average response time
+* Service average draw time
 * Service success and failures
+* Number of draws for the past 30 days
 * Map extent requests
 * Filter statistics by time
 
@@ -49,6 +51,7 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 * Web browser with access to the Internet
 * ArcGIS for Server 10.1+
 * ArcGIS token for the application
+* ArcGIS for Server logs set to FINE
 * ArcGIS for Server web adaptor administrative access enabled
 * Web server to host on
 
@@ -63,10 +66,11 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 	* HTTP referer - [PUBLICSERVERADDRESS]
 	* Username and password that can access all services
 	* Expiration - 1 year
+* Set the ArcGIS for Server logs to be FINE
 * Add token into config.js for the application
-* Configure other options in the config.js to the ennvironment
+* Configure other options in the config.js to the environment
 * Install ArcGIS Server for Administrators on web server
-	* Copy the SpliceMaps folder to C:\inetpub\wwwroot
+	* Copy the folder to C:\inetpub\wwwroot
 	* Convert directory to application in IIS
 
 
