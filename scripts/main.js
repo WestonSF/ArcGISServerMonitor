@@ -1459,13 +1459,14 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
     // Get a token for a secure service
     function getToken(url, username, password, callback) {
-        var tokenRequest = url + "/generateToken?username=" + username + "&password=" + password + "&referer=http://localhost&expiration=5&f=json";
+        var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=5&f=json";
 
         // Make request to server for json data
         $.ajax({
-            url: tokenRequest,
-            dataType: "jsonp",
-            type: "GET",
+            url: url + "/generateToken",
+            data: requestParameters,
+            dataType: "json",
+            type: "POST",
             crossDomain: true,
             // Successful request
             success: function (data) {
