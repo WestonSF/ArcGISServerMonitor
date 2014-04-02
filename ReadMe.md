@@ -1,4 +1,4 @@
-# ArcGIS Server for Administrators
+# ArcGIS Server Monitor
 
 At ArcGIS for Server 10.1 a new architecture was implemented where all communication with the server was done over HTTP. A new
 server admin API was built enabling access to administrative information about the server, services and usage. A number of applications
