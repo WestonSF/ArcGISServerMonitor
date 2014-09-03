@@ -11,8 +11,8 @@ function initVariables() {
         // ArcGIS server site
         agsSite: "http://gis.mstn.govt.nz/arcgis",
 
-        // ArcGIS server token - HTTP referer of where application is hosted - Token: nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw.. - Expires 23/08/2014
-        agsToken: "nTOvVYNqePlLE6jjqRqmWO4h9qUYDDofR3mQFw-pKNeLTHNj14ruX29pJy5ABNnhZ_hIKuaBB8FaAa4t2MXTAw..",
+        // ArcGIS server token - HTTP referer of where application is hosted - Token: nTOvVYNqePlLE6jjqRqmWIzfgg2u0OSxeGgM12KkIFC-0b8Di_HFQZXa9lTDY8RwYavVuq7lQoL4YD9fLQgcLA.. - Expires 24/08/2015
+        agsToken: "nTOvVYNqePlLE6jjqRqmWIzfgg2u0OSxeGgM12KkIFC-0b8Di_HFQZXa9lTDY8RwYavVuq7lQoL4YD9fLQgcLA..",
 
         // Proxy to use
         proxyUrl: "http://gis.mstn.govt.nz/proxy/proxy.ashx",

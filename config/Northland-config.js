@@ -45,7 +45,7 @@ function initVariables() {
             secure: true,
             tokenURL: "https://nrcgis.maps.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
-            username: "NorthlandGIS",
+            username: "EagleTechnologyNRC",
             password: "*****"
         }   
     };
