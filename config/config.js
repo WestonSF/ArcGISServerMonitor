@@ -3,19 +3,20 @@
 function initVariables() {
     configOptions = {
         // Title for site
-        title: "Wairarapa ArcGIS Server Performance Stats",
+        title: "ArcGIS Server Performance & Usage Stats",
 
         // Description for site
         description: "This site contains a number of applications that have been built using Javascript that can query the ArcGIS Server Admin API enabling the ArcGIS administrator to view and analyse useful information about the server usage and performance. This information is displayed in the form of charts, maps and textual information. Note: The maximum number of log records is 10,000, so some statistics are limited by this.",
 
         // ArcGIS server site
-        agsSite: "http://gis.mstn.govt.nz/arcgis",
-
-        // ArcGIS server token - HTTP referer of where application is hosted - Token: nTOvVYNqePlLE6jjqRqmWIzfgg2u0OSxeGgM12KkIFC-0b8Di_HFQZXa9lTDY8RwYavVuq7lQoL4YD9fLQgcLA.. - Expires 24/08/2015
-        agsToken: "nTOvVYNqePlLE6jjqRqmWIzfgg2u0OSxeGgM12KkIFC-0b8Di_HFQZXa9lTDY8RwYavVuq7lQoL4YD9fLQgcLA..",
+        agsSite: {
+            url: "http://laptop-sfw.etgnz.eagle.co.nz:6080/arcgis",
+            username: "siteadmin",
+            password: "adm1n"
+        },
 
         // Proxy to use
-        proxyUrl: "http://gis.mstn.govt.nz/proxy/proxy.ashx",
+        proxyUrl: "proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
 
         // Initial map extent
         initialExtent: { xmin: 1778634, xmax: 1856528, ymin: 5433543, ymax: 5473165 },
@@ -27,10 +28,10 @@ function initVariables() {
         wraparound180: false, 
 
         // Basemap to be used
-        basemap: { id: "Topographic", url: "http://gis.mstn.govt.nz/arcgis/rest/services/Basemaps/TopographicEsri/MapServer" },
+        basemap: { id: "Streets", url: "http://services.arcgisonline.co.nz/arcgis/rest/services/Generic/newzealand/MapServer" },
 
         // Default dropdown options
-        defaultService: "PropertyAndBoundaries/PropertyInternal.MapServer", // Full service name e.g. PropertyAndBoundaries/PropertyInternal.MapServer
+        defaultService: "Wellington/Carparking.MapServer", // Full service name e.g. PropertyAndBoundaries/PropertyInternal.MapServer
         defaultFilter: "Last 24 Hours", // Last Hour, Last 24 Hours, Last Week or Last 30 Days
         defaultGraphic: "Polygon", // Polygon, Point or Hot Spot
 
@@ -40,12 +41,12 @@ function initVariables() {
 
         // ArcGIS Online hot spot analysis service or custom hot spot analysis service
         hotSpotAnalysisService: {
-            enable: true,
+            enable: false,
             url: "http://analysis.arcgis.com/arcgis/rest/services/tasks/GPServer/FindHotSpots",
             secure: true,
             tokenURL: "https://wairarapa.maps.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
-            username: "EagleTechnology",
+            username: "EagleTechnologyWDC",
             password: "*****"
         }   
     };

@@ -7,7 +7,7 @@ about the servers usage and performance. This information is displayed in the fo
 
 Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/23/demo-applications-arcgis-server-for-administrators-sessions-at-the-2013-user-conference)
 
-[Demo](http://gis.mstn.govt.nz/AGSAdmin)
+[Demo](http://gis.mstn.govt.nz/AGSMonitor)
 
 ![Screenshot](/images/Screenshot.jpg)
 
@@ -50,9 +50,7 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 * Notepad or your favorite HTML editor
 * Web browser with access to the Internet
 * ArcGIS for Server 10.1+
-* ArcGIS token for the application
 * ArcGIS for Server logs set to FINE
-* ArcGIS for Server web adaptor administrative access enabled
 * Web server to host on
 
 
@@ -61,15 +59,10 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 * Install proxy on web server
 	* Copy the proxy folder to C:\inetpub\wwwroot
 	* Convert directory to application in IIS
-	* Update the paremter in the configuration file ("proxyurl") to point to the proxy e.g. "'[PUBLICSERVERADDRESS]'/proxy/proxy.ashx"
-* Generate token for ArcGIS for Server at '[PUBLICSERVERADDRESS]'/arcgis/tokens
-	* HTTP referer - [PUBLICSERVERADDRESS]
-	* Username and password that can access all services
-	* Expiration - 1 year
+	* Update the parameter in the configuration file ("proxyUrl") to point to the proxy e.g. "'[PUBLICSERVERADDRESS]'/proxy/proxy.ashx"
 * Set the ArcGIS for Server logs to be FINE
-* Add token into config.js for the application
 * Configure other options in the config.js to the environment
-* Install ArcGIS Server for Administrators on web server
+* Install ArcGIS Server Monitor on web server
 	* Copy the folder to C:\inetpub\wwwroot
 	* Convert directory to application in IIS
 
@@ -95,7 +88,7 @@ Anyone and everyone is welcome to contribute.
 
 
 ## Licensing
-Copyright 2013 Shaun Weston
+Copyright 2014 - Shaun Weston
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

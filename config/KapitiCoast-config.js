@@ -3,19 +3,20 @@
 function initVariables() {
     configOptions = {
         // Title for site
-        title: "Kapiti Coast ArcGIS Server Monitor",
+        title: "KCDC ArcGIS Server Performance & Usage Stats",
 
         // Description for site
         description: "This site contains a number of applications that have been built using Javascript that can query the ArcGIS Server Admin API enabling the ArcGIS administrator to view and analyse useful information about the server usage and performance. This information is displayed in the form of charts, maps and textual information. Note: The maximum number of log records is 10,000, so some statistics are limited by this.",
 
         // ArcGIS server site
-        agsSite: "http://svr-gisapps-1/arcgis",
-
-        // ArcGIS server token - HTTP referer of where application is hosted - Token: qm9yCuzhorf-Aj7NOPrB7DqeKgU9PzunPIDpS0Qn7rORHuQELr8Rk3S7F7DwGq-s - Expires 16/03/2015
-        agsToken: "qm9yCuzhorf-Aj7NOPrB7DqeKgU9PzunPIDpS0Qn7rORHuQELr8Rk3S7F7DwGq-s",
+        agsSite: {
+            url: "http://svr-gisapps-1:6080/arcgis",
+            username: "siteadmin",
+            password: "*****"
+        },
 
         // Proxy to use
-        proxyUrl: "http://svr-gisapps-1/proxy/proxy.ashx",
+        proxyUrl: "http://svr-gisapps-1/proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
 
         // Initial map extent
         initialExtent: { xmin: 1758925, xmax: 1780224, ymin: 5465909, ymax: 5479271 },
