@@ -51,6 +51,7 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 * Web browser with access to the Internet
 * ArcGIS for Server 10.1+
 * ArcGIS for Server logs set to FINE
+* Admin access enabled on [SERVER]/arcgis or [SERVER]:6080/arcgis
 * Web server to host on
 
 
@@ -59,7 +60,7 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 * Install proxy on web server
 	* Copy the proxy folder to C:\inetpub\wwwroot
 	* Convert directory to application in IIS
-	* Update the parameter in the configuration file ("proxyUrl") to point to the proxy e.g. "'[PUBLICSERVERADDRESS]'/proxy/proxy.ashx"
+	* Update the parameter in the configuration file ("proxyUrl") to point to the proxy e.g. "'[SERVER]'/proxy/proxy.ashx"
 * Set the ArcGIS for Server logs to be FINE
 * Configure other options in the config.js to the environment
 * Install ArcGIS Server Monitor on web server

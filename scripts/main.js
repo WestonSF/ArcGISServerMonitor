@@ -1,6 +1,8 @@
 ﻿// -------------------------------------- Global variables --------------------------------------
-// ArcGIS token for access to the site
-var agsToken;
+// ArcGIS server token for access to the site
+var serverToken;
+// ArcGIS online/portal token for access to the site
+var portalToken;
 // Current service selected
 var serviceChoice = null;
 // Current filter selected
@@ -69,9 +71,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     esriConfig.defaults.io.alwaysUseProxy = false;
 
     // Get the token for access to the ArcGIS Server site
-    getToken(configOptions.agsSite.url, configOptions.agsSite.username, configOptions.agsSite.password, function (token) {
-        // Set the global variable
-        agsToken = token;
+    getToken("Server", configOptions.agsSite.url, configOptions.agsSite.username, configOptions.agsSite.password, function (token) {
+        // Set the global variable for the server token
+        serverToken = token;
 
         // Load the application
         loadApps();
@@ -230,8 +232,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         if ((currentPage.indexOf("ServicesPerformance") != -1) | (currentPage.length == 0)) {
             // Show the progress bar and hide the graphs
             $("#appLoadBar").show();
-            $("#requestsPieChartContainer").css('display', 'none');
-            $("#requestsTimeGaugeContainer").css('display', 'none');
+            $("#logRecordsPieChartContainer").css('display', 'none');
+            $("#processTimeGaugeContainer").css('display', 'none');
             $("#drawTimeGaugeContainer").css('display', 'none');
             $("#availabilityContainer").css('display', 'none');
 
@@ -327,8 +329,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     $('.servicesDropdown li > a').click(function (e) {
                         // Show the progress bar and hide the graphs
                         $("#appLoadBar").show();
-                        $("#requestsPieChartContainer").css('display', 'none');
-                        $("#requestsTimeGaugeContainer").css('display', 'none');
+                        $("#logRecordsPieChartContainer").css('display', 'none');
+                        $("#processTimeGaugeContainer").css('display', 'none');
                         $("#drawTimeGaugeContainer").css('display', 'none');
                         $("#availabilityContainer").css('display', 'none');
 
@@ -402,8 +404,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     $('.filterDropdown li > a').click(function (e) {
                         // Show the progress bar and hide the graphs
                         $("#appLoadBar").show();
-                        $("#requestsPieChartContainer").css('display', 'none');
-                        $("#requestsTimeGaugeContainer").css('display', 'none');
+                        $("#logRecordsPieChartContainer").css('display', 'none');
+                        $("#processTimeGaugeContainer").css('display', 'none');
                         $("#drawTimeGaugeContainer").css('display', 'none');
                         $("#availabilityContainer").css('display', 'none');
 
@@ -602,8 +604,11 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     // FUNCTION - Scans the arcgis server logs
     function scanLogs() {
         var accessTime = 0;
+        var totalProcessTime = 0;
         var totalDrawTime = 0;
+        var averageProcessTime = 0;
         var averageDrawTime = 0;
+        var requestCount = 0;
         var drawRequestCount = 0;
         var warnTotal = 0;
         var errTotal = 0;
@@ -633,7 +638,10 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 if (graphicChoice == "Hot Spot") {
                     // Request a token for the service if secure
                     if (configOptions.hotSpotAnalysisService.secure === "true" || configOptions.hotSpotAnalysisService.secure === true) {
-                        getToken(configOptions.hotSpotAnalysisService.tokenURL, configOptions.hotSpotAnalysisService.username, configOptions.hotSpotAnalysisService.password, function (token) {
+                        getToken("Portal", configOptions.hotSpotAnalysisService.tokenURL, configOptions.hotSpotAnalysisService.username, configOptions.hotSpotAnalysisService.password, function (token) {
+                            // Set the global variable for the portal token
+                            portalToken = token;
+
                             var extentFeatureSet = new esri.tasks.FeatureSet();
                             extentFeatureSet.geometryType = "esriGeometryPoint";
                             extentFeatureSet.spatialReference = map.spatialReference;
@@ -641,9 +649,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                             var extentFeatureSetJSON = dojo.toJson(extentFeatureSet.toJson());
 
                             var extentFeatureCollection = "{\"layerDefinition\": {\"geometryType\": \"esriGeometryPoint\",\"fields\": [{\"name\": \"Id\",\"type\": \"esriFieldTypeOID\",\"alias\": \"Id\"}]},\"featureSet\": " + extentFeatureSetJSON + "}";
-
+                            alert(portalToken);
                             // Setup the hotspot task and parameters
-                            hotSpotAnalysisTask = new esri.tasks.Geoprocessor(configOptions.hotSpotAnalysisService.url + "?token=" + token);
+                            hotSpotAnalysisTask = new esri.tasks.Geoprocessor(configOptions.hotSpotAnalysisService.url + "?token=" + portalToken);
                             var params = {
                                 "analysisLayer": extentFeatureCollection
                             };
@@ -664,7 +672,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                                     url: configOptions.hotSpotAnalysisService.url + "/jobs/" + jobInfo.jobId + "/results/hotSpotsResultLayer",
                                     preventCache: true,
                                     content: {
-                                        "token": agsToken,
+                                        "token": portalToken,
                                         "f": "json"
                                     },
                                     handleAs: "json",
@@ -728,13 +736,21 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
             // Services performance
             if ((currentPage.indexOf("ServicesPerformance") != -1) | (currentPage.length == 0)) {
-                // For each of the logs
+                // For each record in the logs
                 for (var i = 0; i < logs.length; i++) {
                     var record = logs[i];
                     var message = record["message"];
 
+                    // Get the records that request the service
+                    if (message.search("request successfully processed") >= 0) {
+                        // Add to process time
+                        totalProcessTime = totalProcessTime + parseFloat(record["elapsed"]);
 
-                    // Get the records that request a draw
+                        // Add to process counter
+                        requestCount++;
+                    }
+
+                    // Get the records that export map image (draw) on the service
                     if (message.search("End ExportMapImage") >= 0) {
                         // Add to total draw time
                         totalDrawTime = totalDrawTime + parseFloat(record["elapsed"]);
@@ -767,69 +783,76 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 logData[1] = ({ text: "Success - " + commaSeparateNumber(sucTotal), y: sucTotal, tooltip: "Number of Successes - " + sucTotal });
                 logData[2] = ({ text: "Errors - " + commaSeparateNumber(errTotal), y: errTotal, tooltip: "Number of Errors - " + errTotal });
 
-                // Get the access time
-                accessTime = getAcessTimes(logResult);
+                // Get the total log records
+                var totalLogRecords = commaSeparateNumber(parseInt(sucTotal) + parseInt(warnTotal) + parseInt(errTotal));
+
+                // Get the average process time
+                averageProcessTime = totalProcessTime / requestCount;
+                if (isNaN(averageProcessTime)) {
+                    averageProcessTime = 0;
+                }
 
                 // Get the average draw time
-                averageDrawTime = totalDrawTime / drawRequestCount
+                averageDrawTime = totalDrawTime / drawRequestCount;
                 if (isNaN(averageDrawTime)) {
                     averageDrawTime = 0;
                 }
-                // Get the total requests
-                var totalRequests = commaSeparateNumber(parseInt(sucTotal) + parseInt(warnTotal) + parseInt(errTotal));
+
+                // Update log records count
+                $("#totalLogRecords").text("Number of records logged (max 10,000) - " + totalLogRecords);
 
                 // Update request count
-                $("#totalRequests").text("Number of requests - " + totalRequests);
+                $("#totalRequests").text("Number of requests - " + commaSeparateNumber(requestCount));
+
+                // Update average process time
+                $("#averageProcessTime").text("Average Process Time (seconds) - " + averageProcessTime.toFixed(2));
 
                 // Update draw request count
                 $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
-
-                // Update average response time
-                $("#averageResponseTime").text("Average Response Time (seconds) - " + accessTime.toFixed(2));
 
                 // Update average draw time
                 $("#averageDrawTime").text("Average Draw Time (seconds) - " + averageDrawTime.toFixed(2));
 
                 // If pie chart hasn't been created
                 if (!pieChart) {
-                    // Only show requests for non cached map services and other services
+                    // Only show log records for non cached map services and other services
                     if (serviceType != "MapServerCached") {
-                        // create the pie chart for requests
-                        createPieChart("requestsPieChart", logData);
+                        // create the pie chart for log records
+                        createPieChart("logRecordsPieChart", logData);
                         // Show the chart
-                        $("#requestsPieChartContainer").css('display', 'block');
+                        $("#logRecordsPieChartContainer").css('display', 'block');
                     }
                 }
-                    // Update chart
+                // Update chart
                 else {
-                    // Only show requests for non cached map services and other services
+                    // Only show log records for non cached map services and other services
                     if (serviceType != "MapServerCached") {
                         pieChart.updateSeries("report", logData);
                         pieChart.render();
                         pieLegend.refresh();
                         // Show the chart
-                        $("#requestsPieChartContainer").css('display', 'block');
+                        $("#logRecordsPieChartContainer").css('display', 'block');
                     }
                 }
 
                 // If gauges haven't been created
                 if (!gauges[0]) {
-                    // Only show response time for non cached map services and other services
+                    // Only show process time for non cached map services and other services
                     if (serviceType != "MapServerCached") {
                         // Create the gauge for average requests
-                        createGauge("requestsTimeGauge", accessTime);
+                        createGauge("processTimeGauge", averageProcessTime);
                         // Show the chart
-                        $("#requestsTimeGaugeContainer").css('display', 'block');
+                        $("#processTimeGaugeContainer").css('display', 'block');
                     }
                 }
-                    // Update chart
+                // Update chart
                 else {
-                    // Only show response time for non cached map services and other services
+                    // Only show process time for non cached map services and other services
                     if (serviceType != "MapServerCached") {
-                        gauges[0].indicators[0].value = accessTime;
+                        gauges[0].indicators[0].value = averageProcessTime;
                         gauges[0].startup();
                         // Show the chart
-                        $("#requestsTimeGaugeContainer").css('display', 'block');
+                        $("#processTimeGaugeContainer").css('display', 'block');
                     }
                 }
                 if (!gauges[1]) {
@@ -841,7 +864,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                         $("#drawTimeGaugeContainer").css('display', 'block');
                     }
                 }
-                    // Update chart
+                // Update chart
                 else {
                     // Only show draw time for map services
                     if (serviceType == "MapServer") {
@@ -927,7 +950,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     });
 
                 }
-                    // Update chart
+                // Update chart
                 else {
                     // Show the chart
                     $("#serviceUseContainer").css('display', 'block');
@@ -963,22 +986,6 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 }
             }
         }));
-    }
-    // ----------------------------------------------------------------------------------------------------
-
-    // FUNCTION - Get access time for logs
-    function getAcessTimes(records) {
-        var averageTime = 0;
-        var i = 0;
-
-        array.forEach(records.logMessages, lang.hitch(this, function (record) {
-            if (record.elapsed !== "") {
-                averageTime += Number(record.elapsed);
-                i++;
-            }
-        }));
-        averageTime = averageTime / i;
-        return (isNaN(averageTime) ? 0 : averageTime);
     }
     // ----------------------------------------------------------------------------------------------------
 
@@ -1088,7 +1095,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                       type: "linear",
                       colors: [{
                           offset: 0,
-                          color: '#7FFF00'
+                          color: '#E0BC1B'
                       }]
                   }
               },
@@ -1098,7 +1105,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                       type: "linear",
                       colors: [{
                           offset: 0,
-                          color: '#7FFF00'
+                          color: '#E0BC1B'
                       }]
                   }
               },
@@ -1108,52 +1115,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                       type: "linear",
                       colors: [{
                           offset: 0,
-                          color: '#7FFF00'
-                      }]
-                  }
-              },
-              {
-                  low: 2.5, high: 3,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
-                          color: '#E0BC1B'
-                      }]
-                  }
-              },
-              {
-                  low: 3, high: 3.5,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
-                          color: '#E0BC1B'
-                      }]
-                  }
-              },
-              {
-                  low: 3.5, high: 4,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
-                          color: '#E0BC1B'
-                      }]
-                  }
-              },
-              {
-                  low: 4, high: 4.5,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
                           color: '#E01E1B'
                       }]
                   }
               },
               {
-                  low: 4.5, high: 5,
+                  low: 2.5, high: 3,
                   color: {
                       type: "linear",
                       colors: [{
@@ -1251,7 +1218,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 horizontal: true,
                 outline: true,
                 style: "font-size: 14px;"
-            }, "requestsPieLegend");
+            }, "logRecordsPieLegend");
 
             pieLegend.startup();
 
@@ -1376,7 +1343,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/logs/query",
             preventCache: true,
             content: {
-                "token": agsToken,
+                "token": serverToken,
                 "level": "FINE",
                 "filter": "{ \"services\": [\"" + serviceChoice + "\"], \"machines\": \"*\"}",
                 "endTime": filterEndTime,
@@ -1384,7 +1351,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 "pageSize": "10000"
             },
             handleAs: "json",
-            useProxy: false
+            useProxy: true
         }).
         // On response
         then(function (response) {
@@ -1407,7 +1374,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service + "/status",
             preventCache: true,
             content: {
-                "token": agsToken,
+                "token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1434,7 +1401,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service,
             preventCache: true,
             content: {
-                "token": agsToken,
+                "token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1461,7 +1428,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service + "/statistics",
             preventCache: true,
             content: {
-                "token": agsToken,
+                "token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1488,7 +1455,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin" + (folder ? "/services/" + folder : "/services"),
             preventCache: true,
             content: {
-                "token": agsToken,
+                "token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1507,12 +1474,21 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     // ----------------------------------------------------------------------------------------------------
 
     // FUNCTION - Get a token for the arcgis server site
-    function getToken(url, username, password, callback) {
+    function getToken(site, url, username, password, callback) {
+        // If ArcGIS Online token
+        if (site == "Portal") {
+            var siteURL = url + "/generateToken";
+        }
+            // If ArcGIS server token
+        else {
+            var siteURL = url + "/tokens/generateToken";
+        }
+
         var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=5&f=json";
 
         // Make request to server for json data
         $.ajax({
-            url: url + "/tokens/generateToken",
+            url: siteURL,
             data: requestParameters,
             dataType: "json",
             type: "POST",
