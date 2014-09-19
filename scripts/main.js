@@ -503,6 +503,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             // Show the progress bar and hide the graphs
             $("#appLoadBar").show();
             $("#serviceUseContainer").css('display', 'none');
+            $("#exportCSV").css('display', 'none');
 
             // Get a list of services
             getAllServices("mapServices", function (serviceList) {
@@ -556,6 +557,13 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                     }));
                 });
+            });
+
+
+            // Setup the Export to CSV click handler
+            $("#exportCSV").click(function () {
+                // Call function to exports logs to CSV
+                exportCSV();
             });
         }
     }
@@ -1026,6 +1034,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                         $("#appLoadBar").hide();
                         $("#progressbarText").text("");
                         $("#progressbarLogsText").text("");
+
+                        // Display Export to CSV button
+                        $("#exportCSV").css('display', 'block');
                     });
 
                 }
@@ -1064,6 +1075,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     $("#appLoadBar").hide();
                     $("#progressbarText").text("");
                     $("#progressbarLogsText").text("");
+
+                    // Display Export to CSV button
+                    $("#exportCSV").css('display', 'block');
                 }
             }
         }));
@@ -1145,7 +1159,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         require([
             // Dojo modules
             "dojox/gauges/AnalogGauge",
-            "dojox/gauges/AnalogArrowIndicator",
+            "dojox/gauges/AnalogArrowIndicator"
         ],
         function () {
             // Set the ranges
@@ -1246,7 +1260,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             "dojox/charting/action2d/Tooltip",
             "dojox/charting/plot2d/Lines",
             "dojox/charting/plot2d/Markers",
-            "dojox/charting/axis2d/Default",
+            "dojox/charting/axis2d/Default"
         ],
         function (chart, pie, legend, theme, highlight, tooltip, lines, markers, axisdefault) {
             // Create the pie chart
@@ -1297,7 +1311,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             "dojox/charting/action2d/Tooltip",
             "dojox/charting/plot2d/Lines",
             "dojox/charting/plot2d/Markers",
-            "dojox/charting/axis2d/Default",
+            "dojox/charting/axis2d/Default"
         ],
         function (chart, theme, columnsplot, tooltip, lines, markers, axisdefault) {
             barChart = new chart(dojo.byId(node), {
@@ -1350,9 +1364,59 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     }
     // ----------------------------------------------------------------------------------------------------
 
-    // FUNCTION - Error handler
-    function requestFailed(error) {
-        console.log("Error: ", error.message);
+    // FUNCTION - Export logs to CSV
+    function exportCSV() {
+        // Get the log messages
+        var logs = logResponse["logMessages"];
+
+        // Setup array for CSV data and set headers
+        var csvData = [["Time", "Draw Time"]];
+
+        // For each record in the logs
+        for (var i = 0; i < logs.length; i++) {
+            var record = logs[i];
+            var message = record["message"];
+
+            // Get the records that export map image (draw) on the service
+            if (message.search("End ExportMapImage") >= 0) {
+                // Get time
+                var unixTime = parseFloat(record["time"]);
+                var unixDate = new Date(unixTime);
+                var year = unixDate.getFullYear();
+                var month = unixDate.getMonth();
+                var date = unixDate.getDate();
+                var hours = unixDate.getHours();
+                var minutes = unixDate.getMinutes();
+                var seconds = unixDate.getSeconds();
+                var formattedTime = hours + ':' + minutes + ':' + seconds;
+                var time = date + "/" + (month + 1) + "/" + year + " at " + formattedTime;
+
+                // Get draw time
+                var drawTime = parseFloat(record["elapsed"]);
+
+                // Push values into array
+                csvData.push([time, drawTime]);
+            }
+        }
+
+        // Setup CSV content
+        var csvContent = "data:text/csv;charset=utf-8,";
+
+        csvData.forEach(function (infoArray, index) {
+            dataString = infoArray.join(",");
+            csvContent = csvContent + dataString + "\n"
+        });
+
+        // Encode the csv URI
+        var encodedUri = encodeURI(csvContent);
+        // Create the link
+        var link = document.createElement("a");
+
+        // Download the CSV
+        var csvFilename = serviceChoice + ".csv";
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", csvFilename);
+        link.click();
     }
     // ----------------------------------------------------------------------------------------------------
 
@@ -1602,13 +1666,13 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             var siteURL = url + "/tokens/generateToken";
         }
 
-        var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=5&f=json";
+        var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=30&f=json";
 
         // Make request to server for json data
         $.ajax({
             url: siteURL,
             data: requestParameters,
-            dataType: "json",
+            dataType: "jsonp",
             type: "POST",
             crossDomain: true,
             // On response
