@@ -6,7 +6,7 @@ function initVariables() {
         title: "KCDC ArcGIS Server Performance & Usage Stats",
 
         // Description for site
-        description: "This site contains a number of applications that have been built using Javascript that can query the ArcGIS Server Admin API enabling the ArcGIS administrator to view and analyse useful information about the server usage and performance. This information is displayed in the form of charts, maps and textual information. Note: The maximum number of log records is 10,000, so some statistics are limited by this.",
+        description: "This site contains a number of useful applications enabling the ArcGIS administrator to view and analyse useful information about an ArcGIS Server site usage and performance. This information is displayed in the form of charts, maps and textual information.",
 
         // ArcGIS server site
         agsSite: {

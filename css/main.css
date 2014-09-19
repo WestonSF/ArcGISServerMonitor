@@ -22,8 +22,8 @@ background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
 border: 2px solid #006699;
 }
 
-/* Requests pie chart */
-#requestsPieChart{
+/* Log records pie chart */
+#logRecordsPieChart{
 top: 10px;
 width: 380px;
 height: 280px;
@@ -39,8 +39,8 @@ background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
 border: 2px solid #006699;
 }
 
-/*Average requests time gauge */
-#requestsTimeGauge{
+/* Average process time gauge */
+#processTimeGauge{
 top: 20px;
 width: 350px;
 height: 200px;
@@ -58,6 +58,23 @@ border: 2px solid #006699;
 
 /* Average draw time gauge */
 #drawTimeGauge{
+top: 20px;
+width: 350px;
+height: 200px;
+overflow: hidden;
+position: relative;
+background: #1e5799;
+background: -moz-linear-gradient(top,  #1e5799 0%, #2989d8 30%, #0082e5 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1e5799), color-stop(30%,#2989d8), color-stop(100%,#0082e5)); 
+background: -webkit-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: -o-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: -ms-linear-gradient(top,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+background: linear-gradient(to bottom,  #1e5799 0%,#2989d8 30%,#0082e5 100%);
+border: 2px solid #006699;
+}
+
+/* Average query time gauge */
+#queryTimeGauge{
 top: 20px;
 width: 350px;
 height: 200px;
@@ -93,6 +110,16 @@ border: 2px solid #006699;
     width: 300px; 
     height: 50px; 
     z-index:1000;
+}
+#progressbarText { 
+  font-family: arial, verdana, tahoma;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+#progressbarLogsText { 
+  font-family: arial, verdana, tahoma;
+  font-size: 1.2em;
+  font-weight: bold;
 }
 
 /* Secure services login popup */

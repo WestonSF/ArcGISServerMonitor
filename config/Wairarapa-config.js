@@ -6,13 +6,13 @@ function initVariables() {
         title: "Wairarapa ArcGIS Server Performance & Usage Stats",
 
         // Description for site
-        description: "This site contains a number of applications that have been built using Javascript that can query the ArcGIS Server Admin API enabling the ArcGIS administrator to view and analyse useful information about the server usage and performance. This information is displayed in the form of charts, maps and textual information. Note: The maximum number of log records is 10,000, so some statistics are limited by this.",
+        description: "This site contains a number of useful applications enabling the ArcGIS administrator to view and analyse useful information about an ArcGIS Server site usage and performance. This information is displayed in the form of charts, maps and textual information.",
 
         // ArcGIS server site
         agsSite: {
-            url: "http://gis.mstn.govt.nz:6080/arcgis",
-            username: "siteadmin",
-            password: "*****"
+            url: "http://gis.mstn.govt.nz/arcgis",
+            username: "administrator",
+            password: "E@gleT3chnology"
         },
 
         // Proxy to use
@@ -47,7 +47,7 @@ function initVariables() {
             tokenURL: "https://wairarapa.maps.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
             username: "EagleTechnologyWDC",
-            password: "*****"
+            password: "E@gleT3chnology"
         }   
     };
 }

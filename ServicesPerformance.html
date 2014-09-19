@@ -23,7 +23,7 @@
   <body>
     <!-- Application progress bar -->
     <div id="appLoadBar" class="progress progress-striped active">
-      <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+      <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><p id="progressbarText"></p><p id="progressbarLogsText"></p></div>
     </div>
 
     <!-- Navigation bar -->
@@ -85,12 +85,12 @@
             <p id="logRecordsDescription">Success rate for all records logged for this service.</p>
             <div id="logRecordsPieChart"></div>
             <div id="logRecordsPieLegend"></div>
-            <p id="totalLogRecords">Number of records logged (max 10,000) - 0</p>
+            <p id="totalLogRecords">Number of records logged - 0</p>
         </div>
         <br />
         <div id="processTimeGaugeContainer">
             <h2>Process Time</h2>
-            <p id="processTimeDescription">Average time to process requests for this service.</p>
+            <p id="processTimeDescription">Average time to process all requests for this service.</p>
             <div id="processTimeGauge"></div>
             <br />
             <p id="totalRequests">Number of requests - 0</p>
@@ -99,11 +99,20 @@
         <br />
         <div id="drawTimeGaugeContainer">
             <h2>Draw Time</h2>
-            <p id="drawTimeDescription">Average time to draw requests for this dynamic map service.</p>
+            <p id="drawTimeDescription">Average time to process draw requests for this dynamic map service.</p>
             <div id="drawTimeGauge"></div>
             <br />
             <p id="totalDraws">Number of draw requests - 0</p>
             <p id="averageDrawTime">Average Draw Time (seconds) - 0.0</p>
+        </div>
+        <br />
+        <div id="queryTimeGaugeContainer">
+            <h2>Query Time</h2>
+            <p id="queryTimeDescription">Average time to process query, identify or find requests on this map service.</p>
+            <div id="queryTimeGauge"></div>
+            <br />
+            <p id="totalQueries">Number of query requests - 0</p>
+            <p id="averageQueryTime">Average Query Time (seconds) - 0.0</p>
         </div>
 
       </div>

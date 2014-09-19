@@ -3,6 +3,16 @@
 var serverToken;
 // ArcGIS online/portal token for access to the site
 var portalToken;
+// Log response returned for a service
+var logResponse;
+// Log data dictionary
+var logData = [
+  { text: "Warning", y: 1 },
+  { text: "Success", y: 1 },
+  { text: "Errors", y: 1 }
+];
+// End filter for the logs query
+var logFilterEndTime;
 // Current service selected
 var serviceChoice = null;
 // Current filter selected
@@ -11,12 +21,6 @@ var filterChoice = null;
 var graphicChoice = null;
 // Type of service selected
 var serviceType = null;
-// Log data dictionary
-var logData = [
-  { text: "Warning", y: 1 },
-  { text: "Success", y: 1 },
-  { text: "Errors", y: 1 }
-];
 // Pie chart
 var pieChart = null;
 // Pie legend
@@ -177,6 +181,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                             // On change handler for services dropdown
                             $('.servicesDropdown li > a').click(function (e) {
+                                // Reset log response
+                                logResponse = null;
+
                                 // Show the progress bar
                                 $("#appLoadBar").show();
 
@@ -192,6 +199,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                             });
                             // On change handler for filter dropdown
                             $('.filterDropdown li > a').click(function (e) {
+                                // Reset log response
+                                logResponse = null;
+
                                 // Show the progress bar
                                 $("#appLoadBar").show();
 
@@ -207,6 +217,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                             });
                             // On change handler for graphic dropdown
                             $('.graphicDropdown li > a').click(function (e) {
+                                // Reset log response
+                                logResponse = null;
+
                                 // Show the progress bar
                                 $("#appLoadBar").show();
 
@@ -327,12 +340,16 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                     // On change handler for services dropdown
                     $('.servicesDropdown li > a').click(function (e) {
+                        // Reset log response
+                        logResponse = null;
+
                         // Show the progress bar and hide the graphs
                         $("#appLoadBar").show();
+                        $("#availabilityContainer").css('display', 'none');
                         $("#logRecordsPieChartContainer").css('display', 'none');
                         $("#processTimeGaugeContainer").css('display', 'none');
                         $("#drawTimeGaugeContainer").css('display', 'none');
-                        $("#availabilityContainer").css('display', 'none');
+                        $("#queryTimeGaugeContainer").css('display', 'none');
 
                         // Update dropdown and selection
                         $('.servicesSelection').text(this.innerHTML);
@@ -402,12 +419,16 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                     // On change handler for filter dropdown
                     $('.filterDropdown li > a').click(function (e) {
+                        // Reset log response
+                        logResponse = null;
+
                         // Show the progress bar and hide the graphs
                         $("#appLoadBar").show();
+                        $("#availabilityContainer").css('display', 'none');
                         $("#logRecordsPieChartContainer").css('display', 'none');
                         $("#processTimeGaugeContainer").css('display', 'none');
                         $("#drawTimeGaugeContainer").css('display', 'none');
-                        $("#availabilityContainer").css('display', 'none');
+                        $("#queryTimeGaugeContainer").css('display', 'none');
 
                         // Update dropdown and selection
                         $('.filterSelection').text(this.innerHTML);
@@ -517,6 +538,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                             // On change handler for services dropdown
                             $('.servicesDropdown li > a').click(function (e) {
+                                // Reset log response
+                                logResponse = null;
+
                                 // Show the progress bar and hide the graphs
                                 $("#appLoadBar").show();
                                 $("#serviceUseContainer").css('display', 'none');
@@ -603,20 +627,25 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
     // FUNCTION - Scans the arcgis server logs
     function scanLogs() {
-        var accessTime = 0;
         var totalProcessTime = 0;
         var totalDrawTime = 0;
+        var totalQueryTime = 0;
         var averageProcessTime = 0;
         var averageDrawTime = 0;
+        var averageQueryTime = 0;
         var requestCount = 0;
         var drawRequestCount = 0;
+        var queryRequestCount = 0;
         var warnTotal = 0;
         var errTotal = 0;
         var sucTotal = 0;
 
+        // Get current unix time
+        var currentUnixTime = (new Date).getTime();
+
         // When logs have been returned
-        when(getLogs(), lang.hitch(this, function (logResult) {
-            // Get the logs
+        when(getLogs(currentUnixTime), lang.hitch(this, function (logResult) {
+            // Get the logs and store in global variable
             var logs = logResult["logMessages"];
 
             // Popular extents
@@ -649,7 +678,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                             var extentFeatureSetJSON = dojo.toJson(extentFeatureSet.toJson());
 
                             var extentFeatureCollection = "{\"layerDefinition\": {\"geometryType\": \"esriGeometryPoint\",\"fields\": [{\"name\": \"Id\",\"type\": \"esriFieldTypeOID\",\"alias\": \"Id\"}]},\"featureSet\": " + extentFeatureSetJSON + "}";
-                            alert(portalToken);
+
                             // Setup the hotspot task and parameters
                             hotSpotAnalysisTask = new esri.tasks.Geoprocessor(configOptions.hotSpotAnalysisService.url + "?token=" + portalToken);
                             var params = {
@@ -698,6 +727,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                                     $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
                                     // Hide the progress bar
                                     $("#appLoadBar").hide();
+                                    $("#progressbarText").text("");
+                                    $("#progressbarLogsText").text("");
                                 },
                                 // On error
                                 function (err) {
@@ -705,6 +736,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                                     $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
                                     // Hide the progress bar
                                     $("#appLoadBar").hide();
+                                    $("#progressbarText").text("");
+                                    $("#progressbarLogsText").text("");
                                 });
 
 
@@ -712,6 +745,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                                 $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
                                 // Hide the progress bar
                                 $("#appLoadBar").hide();
+                                $("#progressbarText").text("");
+                                $("#progressbarLogsText").text("");
                             }
                                 // If failed
                             else {
@@ -722,6 +757,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                                 $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
                                 // Hide the progress bar
                                 $("#appLoadBar").hide();
+                                $("#progressbarText").text("");
+                                $("#progressbarLogsText").text("");
                             }
                         }
                     }
@@ -731,6 +768,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     $("#totalDraws").text("Number of draw requests - " + commaSeparateNumber(drawRequestCount));
                     // Hide the progress bar
                     $("#appLoadBar").hide();
+                    $("#progressbarText").text("");
+                    $("#progressbarLogsText").text("");
                 }
             }
 
@@ -757,6 +796,15 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                         // Add to request counter
                         drawRequestCount++;
+                    }
+
+                    // Get the records that execute a query, find or identify on the service
+                    if ((message.search("End Query") >= 0) | (message.search("End Find") >= 0) | (message.search("End Identify") >= 0)) {
+                        // Add to total draw time
+                        totalQueryTime = totalQueryTime + parseFloat(record["elapsed"]);
+
+                        // Add to request counter
+                        queryRequestCount++;
                     }
 
                     // Get message type
@@ -798,8 +846,14 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     averageDrawTime = 0;
                 }
 
+                // Get the average query time
+                averageQueryTime = totalQueryTime / queryRequestCount;
+                if (isNaN(averageQueryTime)) {
+                    averageQueryTime = 0;
+                }
+
                 // Update log records count
-                $("#totalLogRecords").text("Number of records logged (max 10,000) - " + totalLogRecords);
+                $("#totalLogRecords").text("Number of records logged - " + totalLogRecords);
 
                 // Update request count
                 $("#totalRequests").text("Number of requests - " + commaSeparateNumber(requestCount));
@@ -813,50 +867,50 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 // Update average draw time
                 $("#averageDrawTime").text("Average Draw Time (seconds) - " + averageDrawTime.toFixed(2));
 
-                // If pie chart hasn't been created
+                // Update query request count
+                $("#totalQueries").text("Number of query requests - " + commaSeparateNumber(queryRequestCount));
+
+                // Update average query time
+                $("#averageQueryTime").text("Average Query Time (seconds) - " + averageQueryTime.toFixed(2));
+
+                // If pie chart hasn't been created - Log records pie chart
                 if (!pieChart) {
-                    // Only show log records for non cached map services and other services
-                    if (serviceType != "MapServerCached") {
-                        // create the pie chart for log records
-                        createPieChart("logRecordsPieChart", logData);
-                        // Show the chart
-                        $("#logRecordsPieChartContainer").css('display', 'block');
-                    }
+                    // Show log records for all services
+                    // Create the pie chart for log records
+                    createPieChart("logRecordsPieChart", logData);
+                    // Show the chart
+                    $("#logRecordsPieChartContainer").css('display', 'block');
                 }
-                // Update chart
+                // Update pie chart
                 else {
-                    // Only show log records for non cached map services and other services
-                    if (serviceType != "MapServerCached") {
-                        pieChart.updateSeries("report", logData);
-                        pieChart.render();
-                        pieLegend.refresh();
-                        // Show the chart
-                        $("#logRecordsPieChartContainer").css('display', 'block');
-                    }
+                    // Show log records for all services
+                    pieChart.updateSeries("report", logData);
+                    pieChart.render();
+                    pieLegend.refresh();
+                    // Show the chart
+                    $("#logRecordsPieChartContainer").css('display', 'block');
                 }
 
-                // If gauges haven't been created
+                // If gauge hasn't been created yet - Process time gauge
                 if (!gauges[0]) {
-                    // Only show process time for non cached map services and other services
-                    if (serviceType != "MapServerCached") {
-                        // Create the gauge for average requests
-                        createGauge("processTimeGauge", averageProcessTime);
-                        // Show the chart
-                        $("#processTimeGaugeContainer").css('display', 'block');
-                    }
+                    // Show process time for all services
+                    // Create the gauge for average requests
+                    createGauge("processTimeGauge", averageProcessTime);
+                    // Show the chart
+                    $("#processTimeGaugeContainer").css('display', 'block');                    
                 }
-                // Update chart
+                // Update gauge
                 else {
-                    // Only show process time for non cached map services and other services
-                    if (serviceType != "MapServerCached") {
-                        gauges[0].indicators[0].value = averageProcessTime;
-                        gauges[0].startup();
-                        // Show the chart
-                        $("#processTimeGaugeContainer").css('display', 'block');
-                    }
+                    // Show process time for all services
+                    gauges[0].indicators[0].value = averageProcessTime;
+                    gauges[0].startup();
+                    // Show the chart
+                    $("#processTimeGaugeContainer").css('display', 'block');
                 }
+
+                // If gauge hasn't been created yet - Draw time gauge
                 if (!gauges[1]) {
-                    // Only show draw time for map services
+                    // Only show draw time for dynamic map services
                     if (serviceType == "MapServer") {
                         // Create the gauge for average draw time
                         createGauge("drawTimeGauge", averageDrawTime);
@@ -864,9 +918,9 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                         $("#drawTimeGaugeContainer").css('display', 'block');
                     }
                 }
-                // Update chart
+                // Update gauge
                 else {
-                    // Only show draw time for map services
+                    // Only show draw time for dynamic map services
                     if (serviceType == "MapServer") {
                         gauges[1].indicators[0].value = averageDrawTime;
                         gauges[1].startup();
@@ -875,8 +929,31 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     }
                 }
 
+                // If gauge hasn't been created yet - Query time gauge
+                if (!gauges[2]) {
+                    // Only show query time for map services
+                    if ((serviceType == "MapServer") | (serviceType == "MapServerCached")) {
+                        // Create the gauge for average draw time
+                        createGauge("queryTimeGauge", averageQueryTime);
+                        // Show the chart
+                        $("#queryTimeGaugeContainer").css('display', 'block');
+                    }
+                }
+                // Update gauge
+                else {
+                    // Only show query time for map services
+                    if ((serviceType == "MapServer") | (serviceType == "MapServerCached")) {
+                        gauges[2].indicators[0].value = averageQueryTime;
+                        gauges[2].startup();
+                        // Show the chart
+                        $("#queryTimeGaugeContainer").css('display', 'block');
+                    }
+                }
+
                 // Hide the progress bar
                 $("#appLoadBar").hide();
+                $("#progressbarText").text("");
+                $("#progressbarLogsText").text("");
             }
 
             // Services usage
@@ -919,7 +996,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                     // Create the bar chart for requests
                     createBarChart("servicesUseChart", chartData, function () {
-                        barChart.updateSeries("Daily Draw Count", chartData);
+                        barChart.updateSeries("Number of Draw Requests", chartData);
 
                         // Update x-axis
                         var labels = [];
@@ -947,6 +1024,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                         // Hide the progress bar
                         $("#appLoadBar").hide();
+                        $("#progressbarText").text("");
+                        $("#progressbarLogsText").text("");
                     });
 
                 }
@@ -955,7 +1034,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                     // Show the chart
                     $("#serviceUseContainer").css('display', 'block');
 
-                    barChart.updateSeries("Daily Draw Count", chartData);
+                    barChart.updateSeries("Number of Draw Requests", chartData);
 
                     // Update x-axis
                     var labels = [];
@@ -983,6 +1062,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                     // Hide the progress bar
                     $("#appLoadBar").hide();
+                    $("#progressbarText").text("");
+                    $("#progressbarLogsText").text("");
                 }
             }
         }));
@@ -1105,26 +1186,6 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                       type: "linear",
                       colors: [{
                           offset: 0,
-                          color: '#E0BC1B'
-                      }]
-                  }
-              },
-              {
-                  low: 2, high: 2.5,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
-                          color: '#E01E1B'
-                      }]
-                  }
-              },
-              {
-                  low: 2.5, high: 3,
-                  color: {
-                      type: "linear",
-                      colors: [{
-                          offset: 0,
                           color: '#E01E1B'
                       }]
                   }
@@ -1197,7 +1258,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             pieChart.setTheme(theme);
 
             pieChart.addPlot("default", {
-                title: "Service Requests",
+                title: "Records Logged",
                 type: pie,
                 font: "bold bold 8pt Tahoma",
                 stroke: { color: "blue", width: 0 },
@@ -1263,14 +1324,14 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
             barChart.addAxis("y",
             {
-                title: 'Draw Count',
+                title: 'Number of Draw Requests',
                 vertical: true,
                 fixLower: "major",
                 fixUpper: "major"
             });
 
             // Add the series of data
-            barChart.addSeries("Daily Draw Count", chartData);
+            barChart.addSeries("Daily Draw Requests", chartData);
 
             // Render the chart
             barChart.render();
@@ -1296,28 +1357,28 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     // ----------------------------------------------------------------------------------------------------
 
     // FUNCTION - Get the arcgis server logs
-    function getLogs() {
-        var filterEndTime;
+    function getLogs(startUnixTime) {
         var dfd = new deferred();
 
-        // Get current unix time
-        var unixTime = (new Date).getTime();
-        if (filterChoice == "Last Hour") {
-            filterEndTime = unixTime - (3600 * 1000);
-        }
-        if (filterChoice == "Last 24 Hours") {
-            filterEndTime = unixTime - (86400 * 1000);
-        }
-        if (filterChoice == "Last Week") {
-            filterEndTime = unixTime - (604800 * 1000);
-        }
-        if (filterChoice == "Last 30 Days") {
-            filterEndTime = unixTime - (2592000 * 1000);
+        // If this is the first logging query for this service
+        if (!logResponse) {
+            // Set the end date filter for the query
+            if (filterChoice == "Last Hour") {
+                logFilterEndTime = startUnixTime - (3600 * 1000);
+            }
+            if (filterChoice == "Last 24 Hours") {
+                logFilterEndTime = startUnixTime - (86400 * 1000);
+            }
+            if (filterChoice == "Last Week") {
+                logFilterEndTime = startUnixTime - (604800 * 1000);
+            }
+            if (filterChoice == "Last 30 Days") {
+                logFilterEndTime = startUnixTime - (2592000 * 1000);
+            }
         }
 
-        // Get the date and time - convert from unix time
-        var unixDate = new Date(unixTime);
-
+        // Get the from date and time - convert from unix time and log
+        var unixDate = new Date(startUnixTime);
         var year = unixDate.getFullYear();
         var month = unixDate.getMonth();
         var date = unixDate.getDate();
@@ -1325,18 +1386,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         var minutes = unixDate.getMinutes();
         var seconds = unixDate.getSeconds();
         var formattedTime = hours + ':' + minutes + ':' + seconds;
-        console.log("Stats showing from " + date + "/" + (month + 1) + "/" + year + " at " + formattedTime);
-
-        var unixTimeEnd = filterEndTime;
-        var unixDate = new Date(unixTimeEnd);
-        var year = unixDate.getFullYear();
-        var month = unixDate.getMonth();
-        var date = unixDate.getDate();
-        var hours = unixDate.getHours();
-        var minutes = unixDate.getMinutes();
-        var seconds = unixDate.getSeconds();
-        var formattedTime = hours + ':' + minutes + ':' + seconds;
-        console.log("Stats showing to " + date + "/" + (month + 1) + "/" + year + " at " + formattedTime);
+        console.log("ArcGIS Server logs query showing from " + date + "/" + (month + 1) + "/" + year + " at " + formattedTime);    
 
         // Request the logs
         esri.request({
@@ -1346,7 +1396,8 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                 "token": serverToken,
                 "level": "FINE",
                 "filter": "{ \"services\": [\"" + serviceChoice + "\"], \"machines\": \"*\"}",
-                "endTime": filterEndTime,
+                "startTime": startUnixTime,
+                "endTime": logFilterEndTime,
                 "f": "json",
                 "pageSize": "10000"
             },
@@ -1355,10 +1406,69 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }).
         // On response
         then(function (response) {
-            dfd.resolve(response);
+            // If this is the first logging query for this service
+            if (!logResponse) {
+                // Set the global response variable
+                logResponse = response;
+            }
+            // Otherwise
+            else {
+                // For each record in the logs  
+                for (var i = 0; i < response["logMessages"].length; i++) {
+                    // Push log into existing log response object
+                    logResponse["logMessages"].push(response["logMessages"][i]);
+                }
+            }
+
+            // Get the logs
+            var logs = response["logMessages"];
+            // For each record in the logs  
+            for (var i = 0; i < logs.length; i++) {
+                // When at the last record
+                if (i == (logs.length-1)) {
+                    // Get the time for the record
+                    var record = logs[i];
+                    var lastRecordDate = record["time"];
+
+                    // Get the to date and time - convert from unix time and log
+                    var unixTimeEnd = lastRecordDate;
+                    var unixDate = new Date(unixTimeEnd);
+                    var year = unixDate.getFullYear();
+                    var month = unixDate.getMonth();
+                    var date = unixDate.getDate();
+                    var hours = unixDate.getHours();
+                    var minutes = unixDate.getMinutes();
+                    var seconds = unixDate.getSeconds();
+                    var formattedTime = hours + ':' + minutes + ':' + seconds;
+                    console.log("ArcGIS Server logs query to (Last log record found to filter set) " + date + "/" + (month + 1) + "/" + year + " at " + formattedTime);
+
+                    // If there are more logs i.e. Have hit the 10,000 logs in one query limit
+                    if (response.hasMore === "true" || response.hasMore === true) {
+                        console.log("Querying logs...");
+                        console.log("Number of logs queried - " + commaSeparateNumber(logResponse["logMessages"].length));
+
+                        // Update the loading bar text
+                        $("#progressbarText").text("Querying logs...");
+                        $("#progressbarLogsText").text("Number of logs queried - " + commaSeparateNumber(logResponse["logMessages"].length));
+
+                        // Get more logs - Send the last record as the from date
+                        // When logs have been returned
+                        when(getLogs(lastRecordDate), lang.hitch(this, function (logResult) {
+                            // Resolve response
+                            dfd.resolve(logResponse);
+                        }));
+                    }
+                    // Otherwise
+                    else {
+                        // Resolve response
+                        dfd.resolve(logResponse);
+                    }
+                }
+            }
         },
         // On error
         function (err) {
+            // Resolve response
             dfd.resolve(err);
         });
         return dfd.promise;
@@ -1382,10 +1492,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }).
         // On response
         then(function (response) {
+            // Resolve response
             dfd.resolve(response);
         },
         // On error
         function (err) {
+            // Resolve response
             dfd.resolve(err);
         });
         return dfd.promise;
@@ -1409,10 +1521,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }).
         // On response
         then(function (response) {
+            // Resolve response
             dfd.resolve(response);
         },
         // On error
         function (err) {
+            // Resolve response
             dfd.resolve(err);
         });
         return dfd.promise;
@@ -1436,10 +1550,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }).
         // On response
         then(function (response) {
+            // Resolve response
             dfd.resolve(response);
         },
         // On error
         function (err) {
+            // Resolve response
             dfd.resolve(err);
         });
         return dfd.promise;
@@ -1463,10 +1579,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }).
         // On response
         then(function (response) {
+            // Resolve response
             dfd.resolve(response);
         },
         // On error
         function (err) {
+            // Resolve response
             dfd.resolve(err);
         });
         return dfd.promise;
