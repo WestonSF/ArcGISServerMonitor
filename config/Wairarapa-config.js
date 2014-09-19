@@ -12,7 +12,7 @@ function initVariables() {
         agsSite: {
             url: "http://gis.mstn.govt.nz/arcgis",
             username: "administrator",
-            password: "E@gleT3chnology"
+            password: "*****"
         },
 
         // Proxy to use
@@ -47,7 +47,7 @@ function initVariables() {
             tokenURL: "https://wairarapa.maps.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
             username: "EagleTechnologyWDC",
-            password: "E@gleT3chnology"
+            password: "*****"
         }   
     };
 }

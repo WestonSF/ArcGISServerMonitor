@@ -11,6 +11,8 @@ var logData = [
   { text: "Success", y: 1 },
   { text: "Errors", y: 1 }
 ];
+// Array to hold draw records for past 30 days
+var monthDraws = [];
 // End filter for the logs query
 var logFilterEndTime;
 // Current service selected
@@ -966,13 +968,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
             // Services usage
             if (currentPage.indexOf("ServicesUsage") != -1) {
-                // Array to hold draw records for past 30 days
-                var chartData = [];
-                var dateData = [];
+                // Refresh array to hold draw records for past 30 days
+                monthDraws = [];
 
                 // Set each of the days to zero
                 for (var i = 0; i < 30; i++) {
-                    chartData[i] = 0;
+                    monthDraws[i] = 0;
                 }
 
                 // For each of the logs
@@ -992,23 +993,20 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                         var firstDigit = chartDay.toString().split(".");
 
                         // Add count to chart data array
-                        chartData[firstDigit[0]]++;
+                        monthDraws[firstDigit[0]]++;
                     }
                 }
 
                 // If bar chart hasn't been created
-
                 if (!barChart) {
                     // Show the chart
                     $("#serviceUseContainer").css('display', 'block');
 
                     // Create the bar chart for requests
-                    createBarChart("servicesUseChart", chartData, function () {
-                        barChart.updateSeries("Number of Draw Requests", chartData);
-
+                    createBarChart("servicesUseChart", monthDraws, function () {
                         // Update x-axis
                         var labels = [];
-                        for (var i = 0; i < chartData.length; i++) {
+                        for (var i = 0; i < monthDraws.length; i++) {
                             // Get current unix time
                             var unixTime = (new Date).getTime();
                             // Get the day
@@ -1041,15 +1039,15 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
 
                 }
                 // Update chart
-                else {
+                else {                 
                     // Show the chart
                     $("#serviceUseContainer").css('display', 'block');
-
-                    barChart.updateSeries("Number of Draw Requests", chartData);
+                    
+                    barChart.updateSeries("Number of Draw Requests", monthDraws);
 
                     // Update x-axis
                     var labels = [];
-                    for (var i = 0; i < chartData.length; i++) {
+                    for (var i = 0; i < monthDraws.length; i++) {
                         // Get current unix time
                         var unixTime = (new Date).getTime();
                         // Get the day
@@ -1345,7 +1343,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             });
 
             // Add the series of data
-            barChart.addSeries("Daily Draw Requests", chartData);
+            barChart.addSeries("Number of Draw Requests", chartData);
 
             // Render the chart
             barChart.render();
@@ -1370,33 +1368,23 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         var logs = logResponse["logMessages"];
 
         // Setup array for CSV data and set headers
-        var csvData = [["Time", "Draw Time"]];
+        var csvData = [["Date", "Number of Draw Requests"]];
 
-        // For each record in the logs
-        for (var i = 0; i < logs.length; i++) {
-            var record = logs[i];
-            var message = record["message"];
+        // For each value in the monthly draws array
+        for (var i = 0; i < monthDraws.length; i++) {
+            // Get current unix time
+            var unixTime = (new Date).getTime();
+            // Get the day
+            var day = 86400 * 1000;
 
-            // Get the records that export map image (draw) on the service
-            if (message.search("End ExportMapImage") >= 0) {
-                // Get time
-                var unixTime = parseFloat(record["time"]);
-                var unixDate = new Date(unixTime);
-                var year = unixDate.getFullYear();
-                var month = unixDate.getMonth();
-                var date = unixDate.getDate();
-                var hours = unixDate.getHours();
-                var minutes = unixDate.getMinutes();
-                var seconds = unixDate.getSeconds();
-                var formattedTime = hours + ':' + minutes + ':' + seconds;
-                var time = date + "/" + (month + 1) + "/" + year + " at " + formattedTime;
+            // Setup label
+            var unixTimeLabel = new Date(unixTime - ((i + 1) * day));
+            var year = unixTimeLabel.getFullYear();
+            var month = unixTimeLabel.getMonth();
+            var date = unixTimeLabel.getDate();
 
-                // Get draw time
-                var drawTime = parseFloat(record["elapsed"]);
-
-                // Push values into array
-                csvData.push([time, drawTime]);
-            }
+            // Push values into array
+            csvData.push([date + "/" + (month + 1) + "/" + year, monthDraws[i]]);
         }
 
         // Setup CSV content
@@ -1411,12 +1399,35 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         var encodedUri = encodeURI(csvContent);
         // Create the link
         var link = document.createElement("a");
+        document.body.appendChild(link);
 
-        // Download the CSV
         var csvFilename = serviceChoice + ".csv";
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", csvFilename);
-        link.click();
+
+        // If download attribute supported for the browser (Chrome and Firefox)
+        if (typeof link.download != "undefined") {
+            // Download the CSV
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", csvFilename);
+            link.setAttribute("target", "_self");
+            link.click();
+        }
+        // IE10+ browser
+        else if (navigator.msSaveBlob) {
+            var buffer = csvData.join("\n");
+            var csvBlob = new Blob([buffer], {
+                "type": "text/csv;charset=utf8;"
+            });
+
+            link.setAttribute("href", "#");
+            link.addEventListener("click", function (event) {
+                navigator.msSaveBlob(csvBlob, csvFilename);
+            }, false);
+            link.click();
+        }
+        // Not supported
+        else {
+            alert("Browser not supported.");
+        }
     }
     // ----------------------------------------------------------------------------------------------------
 
@@ -1528,6 +1539,12 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
                         dfd.resolve(logResponse);
                     }
                 }
+            }
+
+            // If no logs
+            if (logs.length == 0) {
+                // Resolve response
+                dfd.resolve(logResponse);
             }
         },
         // On error
