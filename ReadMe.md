@@ -49,7 +49,7 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 
 * Notepad or your favorite HTML editor
 * Web browser with access to the Internet
-* ArcGIS for Server 10.1+
+* ArcGIS for Server 10.1+ (Not 10.3)
 * ArcGIS for Server logs set to FINE
 * Admin access enabled on [SERVER]/arcgis or [SERVER]:6080/arcgis
 * Web server to host on
@@ -62,6 +62,9 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 	* Convert directory to application in IIS
 	* Update the parameter in the configuration file ("proxyUrl") to point to the proxy e.g. "'[SERVER]'/proxy/proxy.ashx"
 * Set the ArcGIS for Server logs to be FINE
+* Enable HTTP POST request with credentials on ArcGIS Server
+	* More info here - http://server.arcgis.com/en/server/latest/administer/windows/enable-token-acquisition-through-an-http-get-request.htm
+	* To acquire a token through an HTTP POST request with credentials in the query parameter, set the allowHttpPostQueryParams property to true.
 * Configure other options in the config.js to the environment
 * Install ArcGIS Server Monitor on web server
 	* Copy the folder to C:\inetpub\wwwroot
@@ -89,7 +92,7 @@ Anyone and everyone is welcome to contribute.
 
 
 ## Licensing
-Copyright 2014 - Shaun Weston
+Copyright 2015 - Shaun Weston
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

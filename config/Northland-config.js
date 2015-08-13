@@ -10,7 +10,7 @@ function initVariables() {
 
         // ArcGIS server site
         agsSite: {
-            url: "http://gis.nrc.govt.nz:6080/arcgis",
+            url: "http://gis.nrc.govt.nz/arcgis",
             username: "siteadmin",
             password: "*****"
         },
@@ -45,7 +45,7 @@ function initVariables() {
             url: "http://analysis.arcgis.com/arcgis/rest/services/tasks/GPServer/FindHotSpots",
             secure: true,
             tokenURL: "https://nrcgis.maps.arcgis.com/sharing",
-            // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
+            // Username/password for ArcGIS Online - Needs to be an organisation account
             username: "EagleTechnologyNRC",
             password: "*****"
         }   

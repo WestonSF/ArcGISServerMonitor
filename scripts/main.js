@@ -1684,7 +1684,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
         }
 
         var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=30&f=json";
-
+        console.log(requestParameters);
         // Make request to server for json data
         $.ajax({
             url: siteURL,

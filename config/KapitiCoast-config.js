@@ -10,13 +10,13 @@ function initVariables() {
 
         // ArcGIS server site
         agsSite: {
-            url: "http://svr-gisapps-1:6080/arcgis",
-            username: "siteadmin",
+            url: "http://svr-gisapps-1.kcdc.govt.nz:6080/arcgis",
+            username: "administrator",
             password: "*****"
         },
 
         // Proxy to use
-        proxyUrl: "http://svr-gisapps-1/proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
+        proxyUrl: "http://svr-gisapps-1.kcdc.govt.nz/proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
 
         // Initial map extent
         initialExtent: { xmin: 1758925, xmax: 1780224, ymin: 5465909, ymax: 5479271 },
@@ -45,7 +45,7 @@ function initVariables() {
             url: "http://analysis.arcgis.com/arcgis/rest/services/tasks/GPServer/FindHotSpots",
             secure: true,
             tokenURL: "https://kcdc.maps.arcgis.com/sharing",
-            // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
+            // Username/password for ArcGIS Online - Needs to be an organisation account
             username: "EagleTechnologyKCDC",
             password: "*****"
         }   

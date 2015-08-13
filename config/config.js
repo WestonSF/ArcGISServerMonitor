@@ -45,8 +45,8 @@ function initVariables() {
             url: "http://analysis.arcgis.com/arcgis/rest/services/tasks/GPServer/FindHotSpots",
             secure: true,
             tokenURL: "https://wairarapa.maps.arcgis.com/sharing",
-            // Username/password for ArcGIS Online - Needs to be an organisation account to have access to the network services
-            username: "EagleTechnologyWDC",
+            // Username/password for ArcGIS Online - Needs to be an organisation account
+            username: "WairarapaCouncil",
             password: "*****"
         }   
     };

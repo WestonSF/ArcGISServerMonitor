@@ -3,35 +3,35 @@
 function initVariables() {
     configOptions = {
         // Title for site
-        title: "ArcGIS Server Performance & Usage Stats",
+        title: "WCRC ArcGIS Server Performance & Usage Stats",
 
         // Description for site
         description: "This site contains a number of useful applications enabling the ArcGIS administrator to view and analyse useful information about an ArcGIS Server site usage and performance. This information is displayed in the form of charts, maps and textual information.",
 
         // ArcGIS server site
         agsSite: {
-            url: "http://laptop-sfw.etgnz.eagle.co.nz:6080/arcgis",
-            username: "siteadmin",
-            password: "adm1n"
+            url: "http://gis.wcrc.govt.nz/arcgis",
+            username: "administrator",
+            password: "*****"
         },
 
         // Proxy to use
-        proxyUrl: "proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
+        proxyUrl: "http://gis.wcrc.govt.nz/proxy/proxy.ashx", // For testing use "proxy/proxy.ashx"
 
         // Initial map extent
-        initialExtent: { xmin: 1778634, xmax: 1856528, ymin: 5433543, ymax: 5473165 },
+        initialExtent: { xmin: 1044662, xmax: 1759038, ymin: 5052697, ymax: 5528948 },
 
         // Spatial reference
         spatialReference: { WKID: 2193, name: "NZTM" },
 
         // Basemap wrap around
-        wraparound180: false,
+        wraparound180: false, 
 
         // Basemap to be used
-        basemap: { id: "Streets", url: "http://services.arcgisonline.co.nz/arcgis/rest/services/Generic/newzealand/MapServer" },
+        basemap: { id: "Topographic", url: "http://gis.wcrc.govt.nz/arcgis/rest/services/Basemaps/TopoEsri/MapServer" },
 
         // Default dropdown options
-        defaultService: "Wellington/Carparking.MapServer", // Full service name e.g. PropertyAndBoundaries/PropertyInternal.MapServer
+        defaultService: "PropertyAndBoundaries/Property.MapServer", // Full service name e.g. Environment/BathingSites.MapServer
         defaultFilter: "Last 24 Hours", // Last Hour, Last 24 Hours, Last Week or Last 30 Days
         defaultGraphic: "Polygon", // Polygon, Point or Hot Spot
 
@@ -41,13 +41,13 @@ function initVariables() {
 
         // ArcGIS Online hot spot analysis service or custom hot spot analysis service
         hotSpotAnalysisService: {
-            enable: false,
+            enable: true,
             url: "http://analysis.arcgis.com/arcgis/rest/services/tasks/GPServer/FindHotSpots",
             secure: true,
-            tokenURL: "https://wairarapa.maps.arcgis.com/sharing",
+            tokenURL: "https://wcrc.maps.arcgis.com/sharing",
             // Username/password for ArcGIS Online - Needs to be an organisation account
-            username: "EagleTechnologyWDC",
+            username: "EagleTechnologyWCRC",
             password: "*****"
-        }
+        }   
     };
 }
