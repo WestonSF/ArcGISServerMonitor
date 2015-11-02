@@ -62,9 +62,10 @@ Based off an application built [here](http://blogs.esri.com/esri/arcgis/2013/08/
 	* Convert directory to application in IIS
 	* Update the parameter in the configuration file ("proxyUrl") to point to the proxy e.g. "'[SERVER]'/proxy/proxy.ashx"
 * Set the ArcGIS for Server logs to be FINE
-* Enable HTTP POST request with credentials on ArcGIS Server
+* Enable HTTP GET and POST requests with credentials on ArcGIS Server
 	* More info here - http://server.arcgis.com/en/server/latest/administer/windows/enable-token-acquisition-through-an-http-get-request.htm
-	* To acquire a token through an HTTP POST request with credentials in the query parameter, set the allowHttpPostQueryParams property to true.
+	* Set the allowHttpPostQueryParams property to true.
+	* Set the allowHttpGet property to true.
 * Configure other options in the config.js to the environment
 * Install ArcGIS Server Monitor on web server
 	* Copy the folder to C:\inetpub\wwwroot
