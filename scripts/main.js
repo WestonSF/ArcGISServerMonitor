@@ -77,13 +77,13 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
     esriConfig.defaults.io.alwaysUseProxy = false;
 
     // Get the token for access to the ArcGIS Server site
-    getToken("Server", configOptions.agsSite.url, configOptions.agsSite.username, configOptions.agsSite.password, function (token) {
+    //getToken("Server", configOptions.agsSite.url, configOptions.agsSite.username, configOptions.agsSite.password, function (token) {
         // Set the global variable for the server token
-        serverToken = token;
+        //serverToken = token;
 
         // Load the application
         loadApps();
-    });
+    //});
 
 
     // Load application function
@@ -1468,7 +1468,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/logs/query",
             preventCache: true,
             content: {
-                "token": serverToken,
+                //"token": serverToken,
                 "level": "FINE",
                 "filter": "{ \"services\": [\"" + serviceChoice + "\"], \"machines\": \"*\"}",
                 "startTime": startUnixTime,
@@ -1565,7 +1565,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service + "/status",
             preventCache: true,
             content: {
-                "token": serverToken,
+                //"token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1594,7 +1594,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service,
             preventCache: true,
             content: {
-                "token": serverToken,
+                //"token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1623,7 +1623,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin/services/" + service + "/statistics",
             preventCache: true,
             content: {
-                "token": serverToken,
+                //"token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1652,7 +1652,7 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             url: configOptions.agsSite.url + "/admin" + (folder ? "/services/" + folder : "/services"),
             preventCache: true,
             content: {
-                "token": serverToken,
+                //"token": serverToken,
                 "f": "json"
             },
             handleAs: "json",
@@ -1683,25 +1683,52 @@ function (map, graphic, agstiled, agsdynamic, featurelayer, request, lang, array
             var siteURL = url + "/tokens/generateToken";
         }
 
-        var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=30&f=json";
+        //var requestParameters = "username=" + username + "&password=" + password + "&referer=http://localhost&expiration=30&f=json";
+        var requestParameters = {
+          username: username,
+          password: password,
+          referer: window.location.origin,
+          expiration: 30,
+          f: 'json'
+        };
         console.log(requestParameters);
         // Make request to server for json data
+        //fazer com objecto da esri js
+        var reqToken = request({
+          url: siteURL,
+          content: requestParameters,
+          handleAs: "json",
+          callbackParamName: "callback"
+        }, {usePost: true, useProxy: false});
+        reqToken.then(
+          function(data) {
+            var token = data.token;
+            callback(token);
+          },
+          function(xhr, status, error) {
+            console.log(error);
+          }
+        );
+        
+        /*
         $.ajax({
             url: siteURL,
             data: requestParameters,
             dataType: "jsonp",
-            type: "POST",
-            crossDomain: true,
+            type: "POST", /*processData:false,*/
+            //crossDomain: true,
             // On response
-            success: function (data) {
-                var token = data.token;
-                callback(token);
-            },
+            //success: function (data) {
+            //    var token = data.token;
+           //     callback(token);
+            //},
             // On error
-            error: function (xhr, status, error) {
-                console.log(error);
-            }
-        });
+            //error: function (xhr, status, error) {
+            //    console.log(error);
+            //}
+        //});
+        
+        
     }
     // ----------------------------------------------------------------------------------------------------
 });
